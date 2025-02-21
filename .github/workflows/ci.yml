@@ -69,6 +69,8 @@ jobs:
         
     - name: Build documentation
       run: |
+        # Ensure docs directory exists
+        mkdir -p docs
         # Copy README.md to docs/index.md
         cp README.md docs/index.md
         mkdocs build --strict

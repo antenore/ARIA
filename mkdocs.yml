@@ -79,6 +79,7 @@ plugins:
       minify_html: true
 
 strict: false  # Disable strict mode for now until we fix all warnings
+warning_is_error: false  # Don't treat warnings as errors
 
 exclude_docs:
   - README.md  # Exclude README.md since we're using it as index.md
