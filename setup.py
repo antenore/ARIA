@@ -17,6 +17,15 @@ setup(
         "pydantic>=2.6.1",
         "jsonschema>=4.21.1"
     ],
+    extras_require={
+        'test': [
+            'pytest',
+            'pytest-cov',
+            'flake8',
+            'mypy',
+            'types-PyYAML',
+        ],
+    },
     entry_points={
         'console_scripts': [
             'aria=aria.cli:cli',
