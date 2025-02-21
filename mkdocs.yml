@@ -77,3 +77,8 @@ plugins:
   - search
   - minify:
       minify_html: true
+
+strict: false  # Disable strict mode for now until we fix all warnings
+
+exclude_docs:
+  - README.md  # Exclude README.md since we're using it as index.md

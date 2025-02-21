@@ -100,13 +100,40 @@ Project maintainers must:
 3. Ensure policy compliance
 4. Maintain documentation accuracy
 
+## Documentation
+
+### Getting Started
+- [Quick Start Guide](guides/getting-started.md)
+- [Working with Templates](guides/templates.md)
+- [Understanding Policy Inheritance](guides/inheritance.md)
+- [Command Line Interface](guides/cli.md)
+
+### API Reference
+- [Policy API](api/policy.md)
+- [Templates API](api/templates.md)
+- [Validator API](api/validator.md)
+- [CLI API](api/cli.md)
+- [Configuration API](api/config.md)
+
+### Technical Documentation
+- [Policy Architecture](technical/policy.md)
+- [Template System](technical/templates.md)
+- [Validation System](technical/validation.md)
+- [Configuration](technical/configuration.md)
+- [Deployment](technical/deployment.md)
+
+### CI/CD Integration
+- [GitHub Actions](ci/github-actions.md)
+- [GitLab CI](ci/gitlab-ci.md)
+- [Jenkins Pipeline](ci/jenkins.md)
+
 ## Contributing
 
-We welcome contributions! Please see CONTRIBUTING.md for guidelines.
+We welcome contributions! Please see our [Contributing Guide](guides/contributing.md) for guidelines.
 
 ## License
 
-Apache License 2.0
+ARIA is licensed under the Apache License 2.0. See our [License](guides/license.md) for details.
 
 ## Project Status
 
