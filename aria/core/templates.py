@@ -31,176 +31,186 @@ logger = get_logger(__name__)
 
 T = TypeVar('T', bound='Template')
 
-class Template(BaseModel):
-    """Policy template model.
+class Template:
+    """Template for policy configuration."""
     
-    A template defines a reusable policy configuration that can be applied
-    to create new policies. Templates include metadata like name and description,
-    as well as predefined statements and path policies.
-    
-    Attributes:
-        name: Template name
-        description: Template description
-        model: Policy model this template is for
-        tags: List of tags for categorizing templates
-        global_statements: List of global policy statements
-        path_policies: List of path-specific policies
-    """
-    name: str
-    description: str
-    model: PolicyModel
-    tags: List[str] = Field(default_factory=list)
-    global_statements: List[Dict[str, Any]] = Field(default_factory=list)
-    path_policies: List[Dict[str, Any]] = Field(default_factory=list)
-
-    def __hash__(self) -> int:
-        """Make Template hashable for set operations.
-        
-        Returns:
-            int: Hash value for the template based on name and model
-        """
-        return hash((self.name, self.model))
-
-    def __eq__(self, other: object) -> bool:
-        """Define equality for Template objects.
+    def __init__(self, name: str, model: PolicyModel, description: str = "", tags: Optional[List[str]] = None,
+                 statements: Optional[List[Dict[str, Any]]] = None, path_policies: Optional[List[Dict[str, Any]]] = None):
+        """Initialize template.
         
         Args:
-            other: Object to compare with
-            
-        Returns:
-            bool: True if objects have same name and model, False otherwise
+            name: Template name
+            model: Policy model type
+            description: Template description
+            tags: Template tags
+            statements: Policy statements
+            path_policies: Path-specific policies
         """
-        if not isinstance(other, Template):
-            return False
-        return self.name == other.name and self.model == other.model
-
-    def model_dump(self, **kwargs) -> Dict[str, Any]:
-        """Override model_dump to handle enum serialization.
+        self.name = name
+        self.model = model
+        self.description = description
+        self.tags = tags or []
+        self.statements = statements or []
+        self.path_policies = path_policies or []
         
-        Args:
-            **kwargs: Additional arguments passed to parent model_dump
-            
-        Returns:
-            Dict[str, Any]: Dictionary with serialized values where enums are
-                converted to their string values
-        """
-        data = super().model_dump(**kwargs)
-        data['model'] = self.model.value
-        return data
-
     @classmethod
-    def from_yaml(cls: Type[T], yaml_str: str) -> T:
-        """Create template from YAML string.
-        
-        Args:
-            yaml_str: YAML content string
-            
-        Returns:
-            T: Created template instance
-            
-        Raises:
-            ValueError: If YAML content is invalid
-        """
+    def from_yaml(cls, content: str) -> 'Template':
+        """Create template from YAML content."""
         try:
-            data = yaml.safe_load(yaml_str)
-            return cls.model_validate(data)
-        except Exception as e:
+            data = yaml.safe_load(content)
+            if not isinstance(data, dict):
+                raise ValueError("Template YAML must be a dictionary")
+                
+            model = PolicyModel(data.get('model', 'assistant'))
+            return cls(
+                name=data.get('name', ''),
+                model=model,
+                description=data.get('description', ''),
+                tags=data.get('tags', []),
+                statements=data.get('statements', []),
+                path_policies=data.get('path_policies', [])
+            )
+        except yaml.YAMLError as e:
             logger.error(f"Failed to parse template YAML: {e}")
             raise ValueError(f"Invalid template YAML: {e}")
+            
+    def apply(self) -> AIPolicy:
+        """Apply template to create a new policy.
+        
+        Returns:
+            AIPolicy: Created policy instance
+        """
+        return AIPolicy(
+            model=self.model,
+            name=self.name,
+            description=self.description,
+            tags=self.tags,
+            statements=self.statements,
+            path_policies=self.path_policies
+        )
+
+def load_template(template_path: Union[str, Path]) -> Dict[str, Any]:
+    """Load a template from a YAML file.
+    
+    Args:
+        template_path: Path to template file
+        
+    Returns:
+        Dict containing template data
+        
+    Raises:
+        FileNotFoundError: If template file doesn't exist
+        yaml.YAMLError: If template is invalid YAML
+    """
+    path = Path(template_path)
+    if not path.exists():
+        raise FileNotFoundError(f"Template not found: {template_path}")
+        
+    with path.open() as f:
+        return yaml.safe_load(f)
 
 class TemplateManager:
-    """Manages policy templates.
+    """Manages policy templates."""
     
-    This class handles loading templates from a directory and creating policies
-    from those templates. It supports both default templates shipped with ARIA
-    and custom templates provided by users.
-    
-    Attributes:
-        DEFAULT_TEMPLATES_DIR: Default directory containing templates
-        templates_dir: Directory to load templates from
-    """
-    DEFAULT_TEMPLATES_DIR: Path = Path(__file__).parent / "templates"
-    
-    def __init__(self, templates_dir: Optional[Union[str, Path]] = None) -> None:
+    def __init__(self, templates_dir: Optional[str] = None):
         """Initialize template manager.
         
         Args:
-            templates_dir: Optional custom templates directory. If not provided,
-                uses the default templates directory
+            templates_dir: Directory containing templates
         """
-        self.templates_dir: Path = Path(templates_dir) if templates_dir else self.DEFAULT_TEMPLATES_DIR
-        self._templates: Dict[str, Template] = {}
-        self._load_templates()
-
-    def _load_templates(self) -> None:
-        """Load templates from directory.
-        
-        Loads all .yml files from the templates directory and parses them
-        as templates. Invalid templates are logged and skipped.
-        """
-        if not self.templates_dir.exists():
-            logger.warning(f"Templates directory not found: {self.templates_dir}")
-            return
+        if templates_dir:
+            self.templates_dir = Path(templates_dir)
+        else:
+            self.templates_dir = Path(__file__).parent.parent / 'templates'
             
-        for file in self.templates_dir.glob("*.yml"):
-            try:
-                template = Template.from_yaml(file.read_text())
-                self._templates[template.name.lower()] = template
-                self._templates[file.stem.lower()] = template
-            except Exception as e:
-                logger.error(f"Failed to load template {file}: {e}")
+        if not self.templates_dir.exists():
+            self.templates_dir.mkdir(parents=True)
+            self._create_base_templates()
 
-    def list_templates(self) -> List[Template]:
-        """List available templates.
+    def _create_base_templates(self):
+        """Create base templates if they don't exist."""
+        base_assistant = {
+            'model': 'assistant',
+            'name': 'Base Assistant Template',
+            'description': 'Base template for AI assistants',
+            'tags': ['base', 'assistant'],
+            'statements': [
+                {
+                    'effect': 'allow',
+                    'actions': ['read', 'write'],
+                    'resources': ['/docs/*', '/code/*']
+                }
+            ]
+        }
         
-        Returns:
-            List[Template]: List of unique templates, excluding duplicates
-                where a template is available under multiple names
-        """
-        return list(set(self._templates.values()))
+        base_tool = {
+            'model': 'tool',
+            'name': 'Base Tool Template',
+            'description': 'Base template for AI tools',
+            'tags': ['base', 'tool'],
+            'statements': [
+                {
+                    'effect': 'allow',
+                    'actions': ['read'],
+                    'resources': ['/docs/*']
+                }
+            ]
+        }
+        
+        (self.templates_dir / 'base_assistant.yml').write_text(yaml.safe_dump(base_assistant))
+        (self.templates_dir / 'base_tool.yml').write_text(yaml.safe_dump(base_tool))
 
     def get_template(self, name: str) -> Template:
-        """Get template by name.
+        """Get a template by name.
         
         Args:
-            name: Template name or filename (case insensitive)
+            name: Template name
             
         Returns:
-            Template: Template instance
+            Template: Found template
             
         Raises:
             ValueError: If template not found
         """
-        name = name.lower()
-        if name not in self._templates:
+        template_path = self.templates_dir / f"{name}.yml"
+        if not template_path.exists():
             raise ValueError(f"Template not found: {name}")
-        return self._templates[name]
+            
+        return Template.from_yaml(template_path.read_text())
+
+    def list_templates(self) -> List[Template]:
+        """List all available templates.
+        
+        Returns:
+            List[Template]: List of available templates
+        """
+        if not self.templates_dir.exists():
+            return []
+            
+        templates = []
+        for path in self.templates_dir.glob('*.yml'):
+            try:
+                template = Template.from_yaml(path.read_text())
+                templates.append(template)
+            except Exception as e:
+                logger.warning(f"Failed to load template {path}: {e}")
+                
+        return sorted(templates, key=lambda t: t.name)
 
     def create_policy(self, template: Template) -> AIPolicy:
-        """Create policy from template.
-        
-        Creates a new policy using the configuration defined in the template,
-        including the policy model, statements, and path policies.
+        """Create a policy from a template.
         
         Args:
             template: Template to use
             
         Returns:
-            AIPolicy: Created policy instance
-            
-        Raises:
-            ValueError: If policy creation fails
+            AIPolicy: Created policy
         """
-        try:
-            policy_data = {
-                "version": "1.0",
-                "name": f"{template.name} Policy",
-                "description": template.description,
-                "model": template.model.value,  # Convert enum to string
-                "statements": template.global_statements,
-                "path_policies": template.path_policies
-            }
-            return AIPolicy.model_validate(policy_data)
-        except Exception as e:
-            logger.error(f"Failed to create policy from template: {e}")
-            raise ValueError(f"Failed to create policy: {e}")
+        policy_data = {
+            "name": f"{template.name} Policy",
+            "description": template.description,
+            "model": template.model.value,
+            "statements": template.statements,
+            "path_policies": template.path_policies
+        }
+        return AIPolicy.model_validate(policy_data)

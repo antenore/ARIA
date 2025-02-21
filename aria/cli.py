@@ -7,19 +7,21 @@ and validating existing policies.
 
 Commands:
     init: Initialize a new policy
-    apply: Apply a template to create/update policy
-    validate: Validate an existing policy
-    list-templates: List available templates
+    template: Manage policy templates
+    policy: Manage ARIA policies
 
 Example:
     >>> # Initialize a new policy
-    >>> aria init --model assistant
+    >>> aria init --model assistant --output my_policy.yml
+    >>> 
+    >>> # List available templates
+    >>> aria template list
     >>> 
     >>> # Apply a template
-    >>> aria apply --template chat_assistant
+    >>> aria template apply chat_assistant --output my_policy.yml
     >>> 
     >>> # Validate policy
-    >>> aria validate policy.yml
+    >>> aria policy validate policy.yml
 """
 
 from __future__ import annotations
@@ -29,6 +31,7 @@ from typing import Optional, Callable, TypeVar, cast, Union, Any
 import sys
 import logging
 import time
+from functools import wraps
 
 import click
 from rich.console import Console
@@ -45,23 +48,18 @@ console = Console()
 F = TypeVar('F', bound=Callable[..., Any])
 
 def handle_error(func: F) -> F:
-    """Decorator to handle errors in CLI commands.
-    
-    Args:
-        func: Function to wrap
-        
-    Returns:
-        Wrapped function that handles errors
-    """
-    def wrapper(*args: Any, **kwargs: Any) -> Any:
+    """Decorator to handle errors in CLI commands."""
+    @wraps(func)
+    def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except Exception as e:
-            error_msg = str(e)
-            logger.error(f"Command failed: {error_msg}")
-            console.print(f"[red]Error: {error_msg}[/red]")
+        except click.UsageError as e:
+            console.print(f"[red]Error: {str(e)}[/red]")
             sys.exit(1)
-    wrapper.__name__ = func.__name__
+        except Exception as e:
+            console.print(f"[red]Error: {str(e)}[/red]")
+            logger.exception("Command failed")
+            sys.exit(1)
     return cast(F, wrapper)
 
 def with_progress(description: str) -> Callable[[F], F]:
@@ -89,133 +87,56 @@ def with_progress(description: str) -> Callable[[F], F]:
     return decorator
 
 @click.group()
-def cli() -> None:
-    """ARIA - AI Participation Policy Management.
-    
+def cli():
+    """ARIA - AI Participation Manager.
+
     Command-line tool for managing AI participation policies. Supports creating,
     applying templates to, and validating policies.
     """
     pass
 
 @cli.command()
-@click.option('--model', '-m', type=click.Choice([m.value for m in PolicyModel]), default='assistant',
+@click.option('--model', type=click.Choice(['assistant', 'tool']), required=True,
               help='Policy model type')
-@click.option('--output', '-o', type=click.Path(), default='aria.yml',
-              help='Output policy file')
-@click.option('--templates-dir', '-t', type=click.Path(exists=False), help='Directory containing templates')
+@click.option('--output', '-o', type=str, required=True,
+              help='Output file path')
+@click.option('--templates-dir', type=str,
+              help='Custom templates directory')
 @handle_error
 @with_progress("Initializing new policy...")
-def init(model: str, output: str, templates_dir: Optional[str]) -> None:
-    """Initialize a new policy.
-    
-    Creates a new policy file with basic structure for the specified model.
-    
-    Args:
-        model: Policy model type ('assistant' or 'tool')
-        output: Output file path for the policy
-        
-    Example:
-        $ aria init --model assistant --output my_policy.yml
-    """
-    logger.info(f"Initializing new policy with model '{model}' at '{output}'")
-    manager = TemplateManager(templates_dir)
-    policy_model = PolicyModel(model)  # Convert string to enum
-    template = manager.get_template(policy_model.value)
-    policy = manager.create_policy(template)
-    
-    output_path = Path(output)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(policy.to_yaml())
-    logger.info(f"Created new policy at '{output}'")
-    console.print(f"[green]Created new policy at {output}[/green]")
-
-@cli.command()
-@click.argument('name', type=str)
-@click.option('--templates-dir', '-t', type=click.Path(exists=False), help='Directory containing templates')
-@click.option('--output', '-o', type=click.Path(), help='Output policy file')
-@handle_error
-@with_progress("Applying template...")
-def apply(name: str, templates_dir: Optional[str], output: Optional[str]) -> None:
-    """Apply a template to create/update policy.
-    
-    Creates a new policy or updates existing one using the specified template.
-    
-    Args:
-        name: Name of template to apply
-        output: Output file path for the policy
-        
-    Example:
-        $ aria apply --template chat_assistant --output my_policy.yml
-    """
-    logger.info(f"Applying template '{name}'")
-    manager = TemplateManager(templates_dir)
-    
-    # Try to convert name to PolicyModel if it matches an enum value
+def init(model: str, output: str, templates_dir: Optional[str]):
+    """Initialize a new policy."""
     try:
-        policy_model = PolicyModel(name)
-        name = policy_model.value
-    except ValueError:
-        pass  # Not a policy model name, use as-is
-    
-    template = manager.get_template(name)
-    policy = manager.create_policy(template)
-    
-    if output:
-        logger.info(f"Writing policy to '{output}'")
+        logger.info(f"Initializing new policy with model '{model}' at '{output}'")
+        manager = TemplateManager(templates_dir)
+        policy_model = PolicyModel(model)
+        
+        # Create output directory if it doesn't exist
         output_path = Path(output)
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(policy.to_yaml())
+        if not output_path.parent.exists():
+            raise click.UsageError(f"Directory does not exist: {output_path.parent}")
+        
+        template = manager.get_template(f"base_{model}")
+        policy = template.apply()
+        policy.save(output)
+        
+        logger.info(f"Created new policy at '{output}'")
         console.print(f"[green]Created new policy at {output}[/green]")
-    else:
-        console.print(policy.to_yaml())
+    except Exception as e:
+        raise click.UsageError(str(e))
 
 @cli.group()
-def policy() -> None:
-    """Manage ARIA policies."""
+def template():
+    """Manage policy templates."""
     pass
 
-@policy.command()
-@click.argument('policy_file', type=click.Path(exists=True))
-@handle_error
-@with_progress("Validating policy...")
-def validate(policy_file: str) -> None:
-    """Validate a policy file.
-    
-    Checks if policy file meets all requirements and constraints.
-    
-    Args:
-        policy_file: Path to policy file to validate
-        
-    Example:
-        $ aria validate policy.yml
-    """
-    logger.info(f"Validating policy file '{policy_file}'")
-    try:
-        policy = AIPolicy.from_yaml_file(policy_file)
-        if policy.validate():
-            logger.info("Policy validation successful")
-            console.print(f"[green]Policy is valid[/green]")
-        else:
-            logger.error("Policy validation failed")
-            console.print(f"[red]Policy validation failed[/red]")
-            sys.exit(1)
-    except Exception as e:
-        logger.error(f"Failed to validate policy: {e}")
-        console.print(f"[red]Error: {e}[/red]")
-        sys.exit(1)
-
-@cli.command(name='list-templates')
-@click.option('--templates-dir', '-t', type=click.Path(exists=False), help='Directory containing templates')
+@template.command(name='list')
+@click.option('--templates-dir', type=str,
+              help='Custom templates directory')
 @handle_error
 @with_progress("Loading templates...")
-def list_templates(templates_dir: Optional[str]) -> None:
-    """List available templates.
-    
-    Displays a table of available templates with their descriptions.
-    
-    Example:
-        $ aria list-templates
-    """
+def list_templates(templates_dir: Optional[str]):
+    """List available templates."""
     logger.info("Listing available templates")
     manager = TemplateManager(templates_dir)
     templates = manager.list_templates()
@@ -235,6 +156,63 @@ def list_templates(templates_dir: Optional[str]) -> None:
         )
     
     console.print(table)
+
+@template.command(name='apply')
+@click.argument('name')
+@click.option('--templates-dir', type=str,
+              help='Custom templates directory')
+@click.option('--output', '-o', type=str,
+              help='Output file path')
+@handle_error
+@with_progress("Applying template...")
+def apply(name: str, templates_dir: Optional[str], output: Optional[str]):
+    """Apply a template to create/update policy."""
+    logger.info(f"Applying template '{name}'")
+    manager = TemplateManager(templates_dir)
+    
+    try:
+        policy_model = PolicyModel(name)
+        name = policy_model.value
+    except ValueError:
+        pass  # Not a policy model name, use as-is
+    
+    template = manager.get_template(name)
+    policy = template.apply()
+    
+    if output:
+        logger.info(f"Writing policy to '{output}'")
+        output_path = Path(output)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        policy.save(output)
+        console.print(f"[green]Created new policy at {output}[/green]")
+    else:
+        console.print(policy.to_yaml())
+
+@cli.group()
+def policy():
+    """Manage ARIA policies."""
+    pass
+
+@policy.command(name='validate')
+@click.argument('policy_file')
+@handle_error
+@with_progress("Validating policy...")
+def validate(policy_file: str):
+    """Validate a policy file."""
+    logger.info(f"Validating policy file '{policy_file}'")
+    try:
+        policy = AIPolicy.from_yaml_file(policy_file)
+        if policy.validate():
+            logger.info("Policy validation successful")
+            console.print(f"[green]Policy is valid[/green]")
+        else:
+            logger.error("Policy validation failed")
+            console.print(f"[red]Policy validation failed[/red]")
+            sys.exit(1)
+    except Exception as e:
+        logger.error(f"Failed to validate policy: {e}")
+        console.print(f"[red]Error: {e}[/red]")
+        sys.exit(1)
 
 if __name__ == '__main__':
     cli()

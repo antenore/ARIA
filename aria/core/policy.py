@@ -236,20 +236,12 @@ class AIPolicy(BaseModel):
         return data
 
     @classmethod
-    def from_yaml(cls: Type[T], content: str) -> T:
-        """Create policy from YAML content.
-        
-        Args:
-            content: YAML content string
-            
-        Returns:
-            T: Created policy instance
-            
-        Raises:
-            ValidationError: If YAML content is invalid
-        """
-        data = yaml.safe_load(content)
-        return cls.model_validate(data)
+    def from_yaml(cls: Type[T], yaml_str: str) -> T:
+        """Create an instance from a YAML string."""
+        data = yaml.safe_load(yaml_str)
+        if not isinstance(data, dict):
+            raise ValueError("YAML must contain a dictionary")
+        return cls(**data)
 
     @classmethod
     def from_yaml_file(cls: Type[T], path: Union[str, Path]) -> T:
@@ -288,6 +280,15 @@ class AIPolicy(BaseModel):
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(self.to_yaml())
+
+    @classmethod
+    def validate(cls, value: Any) -> 'AIPolicy':
+        """Validate the policy configuration."""
+        if isinstance(value, dict):
+            return cls(**value)
+        elif isinstance(value, cls):
+            return value
+        raise ValueError(f"Cannot validate {type(value)} as {cls.__name__}")
 
     def validate(self) -> bool:
         """Validate policy configuration.

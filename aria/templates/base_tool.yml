@@ -1,0 +1,12 @@
+description: Base template for AI tools
+model: tool
+name: Base Tool Template
+statements:
+- actions:
+  - read
+  effect: allow
+  resources:
+  - /docs/*
+tags:
+- base
+- tool

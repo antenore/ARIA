@@ -15,41 +15,47 @@ def runner():
 @pytest.fixture
 def test_templates_dir(tmp_path):
     """Create a test templates directory with valid templates."""
-    templates_dir = tmp_path / 'templates'
-    templates_dir.mkdir(parents=True, exist_ok=True)
+    templates_dir = tmp_path / "templates"
+    templates_dir.mkdir()
     
-    # Create valid assistant template
-    assistant_template = {
-        "name": "Assistant",
-        "description": "Assistant template",
-        "model": "assistant",
-        "tags": ["default"],
-        "global_statements": [
-            {
-                "effect": "allow",
-                "actions": ["analyze", "review", "suggest"],
-                "resources": ["*"]
-            }
-        ]
-    }
+    # Create base templates
+    base_assistant = templates_dir / "base_assistant.yml"
+    base_assistant.write_text("""
+model: assistant
+name: Base Assistant Template
+description: Base template for AI assistants
+tags: [base, assistant]
+statements:
+  - effect: allow
+    actions: [analyze, modify]
+    resources: [/docs/*, /code/*]
+""")
     
-    # Create valid guardian template
-    guardian_template = {
-        "name": "Guardian",
-        "description": "Guardian template",
-        "model": "guardian",
-        "tags": ["default"],
-        "global_statements": [
-            {
-                "effect": "allow",
-                "actions": ["analyze"],
-                "resources": ["*"]
-            }
-        ]
-    }
+    base_tool = templates_dir / "base_tool.yml"
+    base_tool.write_text("""
+model: observer
+name: Base Tool Template  
+description: Base template for AI tools
+tags: [base, tool]
+statements:
+  - effect: allow
+    actions: [analyze]
+    resources: [/docs/*]
+""")
     
-    (templates_dir / 'assistant.yml').write_text(yaml.safe_dump(assistant_template))
-    (templates_dir / 'guardian.yml').write_text(yaml.safe_dump(guardian_template))
+    # Create example templates
+    chat = templates_dir / "chat_assistant.yml"
+    chat.write_text("""
+model: assistant
+name: Chat Assistant
+description: Template for chat-based AI assistants
+tags: [chat, assistant]
+statements:
+  - effect: allow
+    actions: [analyze, generate]
+    resources: [/chat/*]
+""")
+    
     return templates_dir
 
 @pytest.fixture
@@ -97,15 +103,16 @@ def test_template_list(runner, test_templates_dir):
     ])
     assert result.exit_code == 0
     assert 'Available Templates' in result.output
-    assert 'Assistant' in result.output
-    assert 'Guardian' in result.output
+    assert 'Base Assistant' in result.output
+    assert 'Base Tool' in result.output
+    assert 'Chat Assistant' in result.output
 
 def test_template_apply(runner, test_templates_dir):
     """Test applying a template."""
     with runner.isolated_filesystem():
         result = runner.invoke(cli, [
             'template', 'apply',
-            'assistant',
+            'chat_assistant',
             '--templates-dir', str(test_templates_dir),
             '-o', 'test_policy.yml'
         ])
@@ -139,7 +146,11 @@ def test_init_policy_error(runner):
     """Test error handling when initializing policy fails."""
     with runner.isolated_filesystem():
         # Try to create policy in a non-existent directory
-        result = runner.invoke(cli, ['init', '-o', 'nonexistent/test_policy.yml'], catch_exceptions=False)
+        result = runner.invoke(cli, [
+            'init',
+            '--model', 'assistant',
+            '-o', 'nonexistent/test_policy.yml'
+        ], catch_exceptions=False)
         assert result.exit_code == 1
         assert 'Error: ' in result.output
 
