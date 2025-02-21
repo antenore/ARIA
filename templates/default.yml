@@ -1,0 +1,11 @@
+description: Default AI policy with basic restrictions and capabilities.
+global_statements:
+- actions:
+  - execute
+  effect: deny
+  resources:
+  - '*'
+model: assistant
+name: Default Policy
+path_policies: []
+tags: []

@@ -1,0 +1,14 @@
+description: AI can only help with documentation.
+global_statements: []
+model: observer
+name: Documentation Only
+path_policies:
+- pattern: docs/*
+  statements:
+  - actions:
+    - suggest
+    - generate
+    effect: allow
+    resources:
+    - '*.md'
+tags: []

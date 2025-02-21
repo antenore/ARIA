@@ -1,0 +1,41 @@
+name: code_assistant
+version: 1.0.0
+description: Code-focused AI assistant policy
+inherits: basic_assistant
+
+# Override and extend core settings
+settings:
+  model: gpt-4
+  temperature: 0.2  # Lower for more precise code
+  max_tokens: 4000  # Higher for code generation
+
+# Additional permissions for code tasks
+permissions:
+  - analyze_code
+  - generate_code
+  - run_tests
+  - suggest_refactoring
+
+# Enhanced safety for code
+safety:
+  content_filtering: true
+  max_requests_per_minute: 30
+  require_user_confirmation: true
+  code_execution:
+    allowed: false
+    sandbox_only: true
+
+# Code-specific error handling
+error_handling:
+  retry_attempts: 2
+  timeout_seconds: 60
+  fallback_model: gpt-3.5-turbo
+  code_validation: true
+
+# Extended logging for debugging
+logging:
+  level: debug
+  format: json
+  destination: file
+  file_path: ./logs/code_assistant.log
+  include_context: true

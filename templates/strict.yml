@@ -1,0 +1,14 @@
+description: Highly restrictive policy for sensitive code.
+global_statements: []
+model: guardian
+name: Strict Policy
+path_policies:
+- pattern: tests/*
+  statements:
+  - actions:
+    - analyze
+    - review
+    effect: allow
+    resources:
+    - '*.py'
+tags: []

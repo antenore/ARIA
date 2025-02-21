@@ -1,0 +1,74 @@
+site_name: ARIA Documentation
+site_description: AI Responsibility and Integration Assistant
+site_author: Antenore Gatta
+repo_url: https://github.com/antenore/ARIA
+repo_name: antenore/ARIA
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - search.suggest
+    - search.highlight
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Quick Start: guides/getting-started.md
+    - Working with Templates: guides/templates.md
+    - Policy Inheritance: guides/inheritance.md
+    - CLI Usage: guides/cli.md
+  - API Reference:
+    - Policy API: api/policy.md
+    - Templates API: api/templates.md
+    - Validator API: api/validator.md
+    - Configuration API: api/config.md
+  - Technical Docs:
+    - Policy Architecture: technical/policy.md
+    - Template System: technical/templates.md
+    - Validation System: technical/validation.md
+  - CI/CD Integration:
+    - GitHub Actions: ci/github-actions.md
+    - GitLab CI: ci/gitlab-ci.md
+    - Jenkins Pipeline: ci/jenkins.md
+  - Examples:
+    - Basic Policy: examples/basic-policy.yml
+    - Inherited Policy: examples/inherited-policy.yml
+    - Template Usage: examples/template-usage.yml
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - footnotes
+  - meta
+  - toc:
+      permalink: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+plugins:
+  - search
+  - minify:
+      minify_html: true

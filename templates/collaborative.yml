@@ -1,0 +1,18 @@
+description: Balanced policy for collaborative development.
+global_statements:
+- actions:
+  - execute
+  effect: deny
+  resources:
+  - '*'
+model: collaborator
+name: Collaborative Policy
+path_policies:
+- pattern: docs/*
+  statements:
+  - actions:
+    - generate
+    effect: allow
+    resources:
+    - '*.md'
+tags: []
