@@ -33,7 +33,10 @@ nav:
     - Working with Templates: guides/templates.md
     - Policy Inheritance: guides/inheritance.md
     - CLI Usage: guides/cli.md
+    - Contributing: guides/contributing.md
+    - License: guides/license.md
   - API Reference:
+    - CLI API: api/cli.md
     - Policy API: api/policy.md
     - Templates API: api/templates.md
     - Validator API: api/validator.md
@@ -42,6 +45,8 @@ nav:
     - Policy Architecture: technical/policy.md
     - Template System: technical/templates.md
     - Validation System: technical/validation.md
+    - Configuration: technical/configuration.md
+    - Deployment: technical/deployment.md
   - CI/CD Integration:
     - GitHub Actions: ci/github-actions.md
     - GitLab CI: ci/gitlab-ci.md

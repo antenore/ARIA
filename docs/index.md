@@ -86,12 +86,8 @@ aria validate policy.yml
 
 ## Contributing
 
-See our [Contributing Guide](../CONTRIBUTING.md) for details on how to:
-- Set up your development environment
-- Run tests
-- Submit pull requests
-- Follow our coding standards
+For more information about contributing to ARIA, please read our [Contributing Guide](guides/contributing.md).
 
 ## License
 
-ARIA is licensed under the Apache License 2.0. See [LICENSE](../LICENSE) for details.
+For license information, see our [License](guides/license.md).
