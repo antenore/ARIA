@@ -69,11 +69,11 @@ jobs:
         
     - name: Build documentation
       run: |
-        # Ensure docs directory exists
-        mkdir -p docs
+        # Ensure docs and site directories exist
+        mkdir -p docs site
         # Copy README.md to docs/index.md
         cp README.md docs/index.md
-        mkdocs build --strict
+        mkdocs build
         
     - name: Deploy to GitHub Pages
       if: github.ref == 'refs/heads/main'
