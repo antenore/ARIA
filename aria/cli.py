@@ -202,7 +202,7 @@ def validate(policy_file: str):
     logger.info(f"Validating policy file '{policy_file}'")
     try:
         policy = AIPolicy.from_yaml_file(policy_file)
-        if policy.validate():
+        if policy.validate_model():
             logger.info("Policy validation successful")
             console.print(f"[green]Policy is valid[/green]")
         else:

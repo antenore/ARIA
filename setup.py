@@ -25,6 +25,11 @@ setup(
             'mypy',
             'types-PyYAML',
         ],
+        'docs': [
+            'mkdocs',
+            'mkdocs-material',
+            'mkdocs-minify-plugin',
+        ],
     },
     entry_points={
         'console_scripts': [

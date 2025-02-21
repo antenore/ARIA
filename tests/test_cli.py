@@ -5,7 +5,7 @@ from pathlib import Path
 import yaml
 
 from aria.cli import cli
-from aria.core.policy import AIAction, PolicyModel, PolicyEffect
+from aria.core.policy import PolicyModel, PolicyEffect, AIAction
 
 @pytest.fixture
 def runner():
@@ -65,11 +65,11 @@ def sample_policy():
         "version": "1.0",
         "name": "Test Policy",
         "description": "Test policy",
-        "model": "assistant",  # Use string value instead of enum
+        "model": PolicyModel.ASSISTANT.value,
         "statements": [
             {
-                "effect": "allow",  # Use string value instead of enum
-                "actions": ["analyze", "review"],  # Use string values instead of enum
+                "effect": PolicyEffect.ALLOW.value,
+                "actions": [AIAction.ANALYZE.value, AIAction.REVIEW.value],
                 "resources": ["*"]
             }
         ],

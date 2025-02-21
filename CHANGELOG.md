@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Policy inheritance guide
   - Template usage guide
   - Configuration guide
+- Documentation dependencies in setup.py extras_require
 
 ### Changed
 - Reorganized documentation structure for better navigation
@@ -30,12 +31,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved main documentation index for easier navigation
 - Enhanced example policies with detailed comments
 - Standardized documentation format across all files
+- Renamed policy validation methods for better clarity
+- Added proper type hints throughout the codebase
 
 ### Fixed
 - Broken documentation links and references
 - Inconsistent documentation structure
 - Missing API documentation sections
 - Outdated installation instructions
+- Documentation build failures due to missing mkdocs-minify-plugin
+- Type checking errors in policy and template modules
+- CLI validation command compatibility with new validation methods
 
 ## [1.0.0] - 2025-02-21
 

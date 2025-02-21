@@ -46,12 +46,12 @@ class Template:
             statements: Policy statements
             path_policies: Path-specific policies
         """
-        self.name = name
-        self.model = model
-        self.description = description
-        self.tags = tags or []
-        self.statements = statements or []
-        self.path_policies = path_policies or []
+        self.name: str = name
+        self.model: PolicyModel = model
+        self.description: str = description
+        self.tags: List[str] = tags or []
+        self.statements: List[Dict[str, Any]] = statements or []
+        self.path_policies: List[Dict[str, Any]] = path_policies or []
         
     @classmethod
     def from_yaml(cls, content: str) -> 'Template':

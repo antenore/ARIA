@@ -21,7 +21,7 @@ Example:
     ...     description="Example policy",
     ...     model=PolicyModel.ASSISTANT
     ... )
-    >>> policy.validate()
+    >>> policy.validate_model()
     True
 """
 
@@ -236,6 +236,62 @@ class AIPolicy(BaseModel):
         return data
 
     @classmethod
+    def validate_data(cls, value: Any) -> 'AIPolicy':
+        """Validate the policy configuration data.
+        
+        Args:
+            value: Data to validate
+            
+        Returns:
+            AIPolicy: Validated policy instance
+            
+        Raises:
+            ValueError: If validation fails
+        """
+        if isinstance(value, dict):
+            return cls(**value)
+        elif isinstance(value, cls):
+            return value
+        raise ValueError(f"Cannot validate {type(value)} as {cls.__name__}")
+
+    def validate_model(self) -> bool:
+        """Validate policy configuration against model constraints.
+        
+        Performs model-specific validation to ensure the policy adheres to
+        the constraints of its policy model.
+        
+        Returns:
+            bool: True if valid, False otherwise
+        """
+        try:
+            # Validate statements against model constraints
+            allowed_actions = self._get_allowed_actions()
+            for statement in self.statements:
+                for action in statement.actions:
+                    if action not in allowed_actions:
+                        logger.error(f"Action {action} not allowed in {self.model} model")
+                        return False
+            return True
+        except Exception as e:
+            logger.error(f"Policy validation failed: {e}")
+            return False
+
+    def _get_allowed_actions(self) -> Set[AIAction]:
+        """Get allowed actions based on policy model."""
+        if self.model == PolicyModel.GUARDIAN:
+            return {AIAction.ANALYZE, AIAction.REVIEW}
+        elif self.model == PolicyModel.OBSERVER:
+            return {AIAction.ANALYZE}
+        elif self.model == PolicyModel.ASSISTANT:
+            return {AIAction.ANALYZE, AIAction.REVIEW, AIAction.SUGGEST}
+        elif self.model == PolicyModel.COLLABORATOR:
+            return {AIAction.ANALYZE, AIAction.REVIEW, AIAction.SUGGEST, AIAction.GENERATE}
+        elif self.model == PolicyModel.PARTNER:
+            return {AIAction.ANALYZE, AIAction.REVIEW, AIAction.SUGGEST, AIAction.GENERATE, AIAction.MODIFY, AIAction.EXECUTE}
+        else:
+            raise ValueError(f"Unknown policy model: {self.model}")
+
+    @classmethod
     def from_yaml(cls: Type[T], yaml_str: str) -> T:
         """Create an instance from a YAML string."""
         data = yaml.safe_load(yaml_str)
@@ -280,64 +336,6 @@ class AIPolicy(BaseModel):
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(self.to_yaml())
-
-    @classmethod
-    def validate(cls, value: Any) -> 'AIPolicy':
-        """Validate the policy configuration."""
-        if isinstance(value, dict):
-            return cls(**value)
-        elif isinstance(value, cls):
-            return value
-        raise ValueError(f"Cannot validate {type(value)} as {cls.__name__}")
-
-    def validate(self) -> bool:
-        """Validate policy configuration.
-        
-        Performs model-specific validation to ensure the policy adheres to
-        the constraints of its policy model.
-        
-        Returns:
-            bool: True if valid, False otherwise
-        """
-        try:
-            # Basic validation is handled by pydantic
-            self.model_dump()
-            
-            # Additional validation logic here
-            actions: Set[AIAction] = set()
-            for statement in self.statements:
-                actions.update(statement.actions)
-                
-            for path_policy in self.path_policies:
-                for statement in path_policy.statements:
-                    actions.update(statement.actions)
-                    
-            # Model-specific validation
-            if self.model == PolicyModel.GUARDIAN:
-                if AIAction.MODIFY in actions or AIAction.GENERATE in actions:
-                    logger.error("Guardian model cannot modify or generate code")
-                    return False
-                    
-            elif self.model == PolicyModel.OBSERVER:
-                if any(action != AIAction.ANALYZE for action in actions):
-                    logger.error("Observer model can only analyze code")
-                    return False
-                    
-            elif self.model == PolicyModel.ASSISTANT:
-                if AIAction.MODIFY in actions or AIAction.EXECUTE in actions:
-                    logger.error("Assistant model cannot modify or execute code")
-                    return False
-                    
-            elif self.model == PolicyModel.COLLABORATOR:
-                if AIAction.EXECUTE in actions:
-                    logger.error("Collaborator model cannot execute code")
-                    return False
-                    
-            return True
-            
-        except Exception as e:
-            logger.error(f"Policy validation failed: {e}")
-            return False
 
     def evaluate(self, action: AIAction, path: Union[str, Path]) -> PolicyEffect:
         """Evaluate policy for an action and path.
