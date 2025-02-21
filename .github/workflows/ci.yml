@@ -65,6 +65,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install mkdocs mkdocs-material
+        pip install .[recommended,git,imaging]
         
     - name: Build documentation
       run: |
