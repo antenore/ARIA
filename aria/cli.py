@@ -87,7 +87,7 @@ def with_progress(description: str) -> Callable[[F], F]:
     return decorator
 
 @click.group()
-def cli():
+def cli() -> None:
     """ARIA - AI Participation Manager.
 
     Command-line tool for managing AI participation policies. Supports creating,
@@ -104,7 +104,7 @@ def cli():
               help='Custom templates directory')
 @handle_error
 @with_progress("Initializing new policy...")
-def init(model: str, output: str, templates_dir: Optional[str]):
+def init(model: str, output: str, templates_dir: Optional[str]) -> None:
     """Initialize a new policy."""
     try:
         logger.info(f"Initializing new policy with model '{model}' at '{output}'")
@@ -126,7 +126,7 @@ def init(model: str, output: str, templates_dir: Optional[str]):
         raise click.UsageError(str(e))
 
 @cli.group()
-def template():
+def template() -> None:
     """Manage policy templates."""
     pass
 
@@ -135,7 +135,7 @@ def template():
               help='Custom templates directory')
 @handle_error
 @with_progress("Loading templates...")
-def list_templates(templates_dir: Optional[str]):
+def list_templates(templates_dir: Optional[str]) -> None:
     """List available templates."""
     logger.info("Listing available templates")
     manager = TemplateManager(templates_dir)
@@ -165,7 +165,7 @@ def list_templates(templates_dir: Optional[str]):
               help='Output file path')
 @handle_error
 @with_progress("Applying template...")
-def apply(name: str, templates_dir: Optional[str], output: Optional[str]):
+def apply(name: str, templates_dir: Optional[str], output: Optional[str]) -> None:
     """Apply a template to create/update policy."""
     logger.info(f"Applying template '{name}'")
     manager = TemplateManager(templates_dir)
@@ -189,7 +189,7 @@ def apply(name: str, templates_dir: Optional[str], output: Optional[str]):
         console.print(policy.to_yaml())
 
 @cli.group()
-def policy():
+def policy() -> None:
     """Manage ARIA policies."""
     pass
 
@@ -197,7 +197,7 @@ def policy():
 @click.argument('policy_file')
 @handle_error
 @with_progress("Validating policy...")
-def validate(policy_file: str):
+def validate(policy_file: str) -> None:
     """Validate a policy file."""
     logger.info(f"Validating policy file '{policy_file}'")
     try:

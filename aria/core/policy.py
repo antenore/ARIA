@@ -209,16 +209,8 @@ class AIPolicy(BaseModel):
     statements: List[PolicyStatement] = Field(default_factory=list)
     path_policies: List[PathPolicy] = Field(default_factory=list)
 
-    def model_dump(self, **kwargs) -> Dict[str, Any]:
-        """Override model_dump to handle enum serialization.
-        
-        Args:
-            **kwargs: Additional arguments passed to parent model_dump
-            
-        Returns:
-            Dict[str, Any]: Dictionary with serialized values where enums are
-                converted to their string values
-        """
+    def model_dump(self, **kwargs: Any) -> Dict[str, Any]:
+        """Override model_dump to handle enum serialization."""
         data = super().model_dump(**kwargs)
         data['model'] = self.model.value
         
@@ -234,6 +226,44 @@ class AIPolicy(BaseModel):
                 statement['actions'] = [action.value for action in statement['actions']]
                 
         return data
+
+    @classmethod
+    def from_yaml(cls: Type[T], yaml_str: str) -> T:
+        """Create an instance from a YAML string.
+        
+        Args:
+            yaml_str: YAML string to parse
+            
+        Returns:
+            T: Created policy instance
+            
+        Raises:
+            ValueError: If YAML is invalid
+        """
+        data = yaml.safe_load(yaml_str)
+        if not isinstance(data, dict):
+            raise ValueError("YAML must contain a dictionary")
+        return cls(**data)
+
+    @classmethod
+    def from_yaml_file(cls: Type[T], path: Union[str, Path]) -> T:
+        """Create policy from YAML file.
+        
+        Args:
+            path: Path to YAML file
+            
+        Returns:
+            T: Created policy instance
+            
+        Raises:
+            FileNotFoundError: If file does not exist
+            ValidationError: If file content is invalid
+        """
+        path = Path(path)
+        if not path.exists():
+            raise FileNotFoundError(f"Policy file not found: {path}")
+            
+        return cls.from_yaml(path.read_text())
 
     @classmethod
     def validate_data(cls, value: Any) -> 'AIPolicy':
@@ -255,16 +285,8 @@ class AIPolicy(BaseModel):
         raise ValueError(f"Cannot validate {type(value)} as {cls.__name__}")
 
     def validate_model(self) -> bool:
-        """Validate policy configuration against model constraints.
-        
-        Performs model-specific validation to ensure the policy adheres to
-        the constraints of its policy model.
-        
-        Returns:
-            bool: True if valid, False otherwise
-        """
+        """Validate policy configuration against model constraints."""
         try:
-            # Validate statements against model constraints
             allowed_actions = self._get_allowed_actions()
             for statement in self.statements:
                 for action in statement.actions:
@@ -290,34 +312,6 @@ class AIPolicy(BaseModel):
             return {AIAction.ANALYZE, AIAction.REVIEW, AIAction.SUGGEST, AIAction.GENERATE, AIAction.MODIFY, AIAction.EXECUTE}
         else:
             raise ValueError(f"Unknown policy model: {self.model}")
-
-    @classmethod
-    def from_yaml(cls: Type[T], yaml_str: str) -> T:
-        """Create an instance from a YAML string."""
-        data = yaml.safe_load(yaml_str)
-        if not isinstance(data, dict):
-            raise ValueError("YAML must contain a dictionary")
-        return cls(**data)
-
-    @classmethod
-    def from_yaml_file(cls: Type[T], path: Union[str, Path]) -> T:
-        """Create policy from YAML file.
-        
-        Args:
-            path: Path to YAML file
-            
-        Returns:
-            T: Created policy instance
-            
-        Raises:
-            FileNotFoundError: If file does not exist
-            ValidationError: If file content is invalid
-        """
-        path = Path(path)
-        if not path.exists():
-            raise FileNotFoundError(f"Policy file not found: {path}")
-            
-        return cls.from_yaml(path.read_text())
 
     def to_yaml(self) -> str:
         """Convert policy to YAML string.
@@ -345,7 +339,7 @@ class AIPolicy(BaseModel):
             path: Path to evaluate
             
         Returns:
-            PolicyEffect: PolicyEffect.ALLOW if allowed, PolicyEffect.DENY otherwise
+            PolicyEffect: Final policy effect
         """
         # Check path-specific policies first
         for policy in self.path_policies:

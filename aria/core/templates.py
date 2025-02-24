@@ -85,8 +85,8 @@ class Template:
             name=self.name,
             description=self.description,
             tags=self.tags,
-            statements=self.statements,
-            path_policies=self.path_policies
+            statements=self.statements,  # Ensure types match expected
+            path_policies=self.path_policies  # Ensure types match expected
         )
 
 def load_template(template_path: Union[str, Path]) -> Dict[str, Any]:
@@ -127,7 +127,7 @@ class TemplateManager:
             self.templates_dir.mkdir(parents=True)
             self._create_base_templates()
 
-    def _create_base_templates(self):
+    def _create_base_templates(self) -> None:
         """Create base templates if they don't exist."""
         base_assistant = {
             'model': 'assistant',
@@ -210,6 +210,7 @@ class TemplateManager:
             "name": f"{template.name} Policy",
             "description": template.description,
             "model": template.model.value,
+            "tags": template.tags,
             "statements": template.statements,
             "path_policies": template.path_policies
         }
