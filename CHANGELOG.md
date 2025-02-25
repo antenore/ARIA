@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved path handling consistency using os.path
 - Better error messages and logging in template processing
 - Updated CLI to handle policy model display more robustly
+- Improved type handling in template creation with explicit PolicyModel conversion
 
 ### Fixed
 - Broken documentation links and references

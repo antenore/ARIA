@@ -466,11 +466,20 @@ class TemplateManager:
             
             if not os.path.exists(template_file):
                 try:
-                    # Ensure template data has all required fields
-                    if "name" not in template_data:
-                        template_data["name"] = template_name
+                    # Convert model to PolicyModel if it's a string
+                    model = template_data["model"]
+                    if isinstance(model, str):
+                        model = PolicyModel[model.upper()]
                     
-                    template = Template(**template_data)
+                    # Create template using proper unpacking of dictionary
+                    template = Template(
+                        name=template_data["name"],
+                        model=model,
+                        description=template_data.get("description", ""),
+                        tags=template_data.get("tags", []),
+                        statements=template_data.get("statements", []),
+                        path_policies=template_data.get("path_policies", [])
+                    )
                     
                     # Write template to file
                     with open(template_file, "w") as f:
