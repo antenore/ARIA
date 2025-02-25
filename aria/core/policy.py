@@ -336,28 +336,35 @@ class AIPolicy(BaseModel):
             raise ValueError(f"Unknown policy model: {self.model}")
 
     def evaluate(self, action: AIAction, path: Union[str, Path]) -> PolicyEffect:
-        """Evaluate policy for an action and path.
+        """Evaluate policy for an action and path following AWS IAM principles.
         
         Args:
             action: Action to evaluate
             path: Path to evaluate
             
         Returns:
-            PolicyEffect: Final policy effect
+            PolicyEffect: Final policy effect (DENY by default)
         """
-        # Check path-specific policies first
+        # Start with model's default permissions
+        allowed_by_model = action in self._get_allowed_actions()
+        
+        # Check path-specific policies first (highest precedence)
         for policy in self.path_policies:
             effect = policy.evaluate(action, path)
             if effect is not None:
                 return effect
                 
-        # Then check global statements
+        # Then check global statements (last matching statement wins)
+        last_matching_effect = None
         for statement in self.statements:
             if statement.matches_action(action) and statement.matches_resource(str(path)):
-                return statement.effect
+                last_matching_effect = statement.effect
                 
-        # Default deny
-        return PolicyEffect.DENY
+        if last_matching_effect is not None:
+            return last_matching_effect
+                
+        # If no explicit policy found, use model's default
+        return PolicyEffect.ALLOW if allowed_by_model else PolicyEffect.DENY
         
     def get_permissions(self, path: Union[str, Path]) -> Set[AIAction]:
         """Get allowed actions for a path.
@@ -371,15 +378,13 @@ class AIPolicy(BaseModel):
         # Start with model default permissions
         allowed = self._get_allowed_actions()
         
-        # Apply statements and path policies
+        # Apply policy evaluation for each action
+        result = set()
         for action in AIAction.all_actions():
-            effect = self.evaluate(action, path)
-            if effect == PolicyEffect.ALLOW and action not in allowed:
-                allowed.add(action)
-            elif effect == PolicyEffect.DENY and action in allowed:
-                allowed.remove(action)
+            if self.evaluate(action, path) == PolicyEffect.ALLOW:
+                result.add(action)
                 
-        return allowed
+        return result
 
 class PolicyManager:
     """Manages AI participation policies for a project.

@@ -11,6 +11,8 @@
   * [x] Basic inheritance structure
   * [x] Test inheritance implementation
   * [x] Document inheritance rules
+  * [x] Fix path-specific policy precedence
+  * [x] Implement "last match wins" for global statements
 - [x] Create built-in policy templates
   * [x] Default templates
   * [x] Template management
@@ -27,6 +29,16 @@
 - [x] Consistent path handling
 - [x] Improved YAML serialization
 - [x] Error handling and validation
+- [x] Implement policy evaluation
+  * [x] Basic evaluation logic
+  * [x] Path-specific policies
+  * [x] Global statements
+  * [x] Model defaults
+- [ ] Enhance policy validation
+  * [ ] Add validation for path patterns
+  * [ ] Validate action-resource compatibility
+  * [ ] Check for policy conflicts
+  * [ ] Add custom validation rules
 
 ## 3. CI/CD Integration
 - [ ] GitHub Actions integration

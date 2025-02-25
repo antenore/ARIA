@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Expanded policy models in CLI to include 'guardian', 'observer', 'collaborator', and 'partner' options
 - Enhanced enum handling in templates with proper validation and case-insensitive matching
 - Improved type safety across template and policy management
+- GitHub Actions CI workflow for automated testing
+- Test status badge in README.md
 
 ### Changed
 - Reorganized documentation structure for better navigation
@@ -42,6 +44,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Better error messages and logging in template processing
 - Updated CLI to handle policy model display more robustly
 - Improved type handling in template creation with explicit PolicyModel conversion
+- Updated policy evaluation to better match AWS IAM behavior:
+  - Path-specific policies now have highest precedence
+  - Global statements follow "last match wins" principle
+  - Model defaults act as baseline when no explicit policies match
+- Improved test coverage for policy inheritance and evaluation
 
 ### Fixed
 - Broken documentation links and references
@@ -59,6 +66,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Template processing now properly handles case-insensitive enum values
 - Fixed temporary template creation in Template.from_dict
 - Improved error handling in policy statement processing
+- Policy inheritance now correctly handles path-specific overrides
+- Global statement evaluation now respects statement order
 
 ## [1.0.0] - 2025-02-21
 

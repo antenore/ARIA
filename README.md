@@ -1,6 +1,7 @@
 # ARIA (Artificial Intelligence Regulation Interface & Agreements)
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Tests](https://github.com/antenore/ARIA/actions/workflows/tests.yml/badge.svg)](https://github.com/antenore/ARIA/actions/workflows/tests.yml)
 
 ## What is ARIA?
 
