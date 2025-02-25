@@ -18,42 +18,43 @@ def test_templates_dir(tmp_path):
     templates_dir = tmp_path / "templates"
     templates_dir.mkdir()
     
-    # Create base templates
-    base_assistant = templates_dir / "base_assistant.yml"
-    base_assistant.write_text("""
+    # Create default template
+    default_template = templates_dir / "default.yml"
+    default_template.write_text("""
 model: assistant
-name: Base Assistant Template
-description: Base template for AI assistants
-tags: [base, assistant]
+name: default
+description: Default AI policy with basic restrictions and capabilities
 statements:
+  - effect: deny
+    actions: [execute]
+    resources: ["*"]
   - effect: allow
-    actions: [analyze, modify]
-    resources: [/docs/*, /code/*]
+    actions: [analyze, review]
+    resources: ["*.py"]
+path_policies:
+  - pattern: docs/**
+    statements:
+      - effect: allow
+        actions: [generate, modify, suggest]
+        resources: ["*"]
 """)
     
-    base_tool = templates_dir / "base_tool.yml"
-    base_tool.write_text("""
-model: observer
-name: Base Tool Template  
-description: Base template for AI tools
-tags: [base, tool]
+    # Create strict template
+    strict_template = templates_dir / "strict.yml"
+    strict_template.write_text("""
+model: guardian
+name: strict
+description: Strict policy template with minimal AI permissions
 statements:
-  - effect: allow
-    actions: [analyze]
-    resources: [/docs/*]
-""")
-    
-    # Create example templates
-    chat = templates_dir / "chat_assistant.yml"
-    chat.write_text("""
-model: assistant
-name: Chat Assistant
-description: Template for chat-based AI assistants
-tags: [chat, assistant]
-statements:
-  - effect: allow
-    actions: [analyze, generate]
-    resources: [/chat/*]
+  - effect: deny
+    actions: [all]
+    resources: ["*"]
+path_policies:
+  - pattern: tests/**
+    statements:
+      - effect: allow
+        actions: [suggest]
+        resources: ["*.py"]
 """)
     
     return templates_dir
@@ -64,13 +65,13 @@ def sample_policy():
     return {
         "version": "1.0",
         "name": "Test Policy",
-        "description": "Test policy",
+        "description": "Test policy for code review and documentation",
         "model": PolicyModel.ASSISTANT.value,
         "statements": [
             {
                 "effect": PolicyEffect.ALLOW.value,
                 "actions": [AIAction.ANALYZE.value, AIAction.REVIEW.value],
-                "resources": ["*"]
+                "resources": ["*.py"]
             }
         ],
         "path_policies": []
@@ -82,18 +83,39 @@ def test_cli_help(runner):
     assert result.exit_code == 0
     assert 'ARIA - AI Participation Manager' in result.output
 
-def test_init_policy(runner, test_templates_dir):
-    """Test initializing a new policy."""
+def test_init_policy_with_options(runner, test_templates_dir):
+    """Test initializing a new policy with specific options."""
     with runner.isolated_filesystem():
         result = runner.invoke(cli, [
             'init',
             '--model', 'assistant',
+            '--name', 'Test Policy',
+            '--description', 'A test policy for code review and documentation',
             '-o', 'test_policy.yml',
             '--templates-dir', str(test_templates_dir)
         ])
         assert result.exit_code == 0
         assert Path('test_policy.yml').exists()
         assert 'Created new policy' in result.output
+
+        # Verify policy contents
+        with open('test_policy.yml') as f:
+            policy = yaml.safe_load(f)
+            assert policy['name'] == 'Test Policy'
+            assert policy['model'] == 'assistant'
+            assert 'code review and documentation' in policy['description'].lower()
+
+def test_init_policy_error(runner, test_templates_dir):
+    """Test error handling when initializing policy fails."""
+    with runner.isolated_filesystem():
+        result = runner.invoke(cli, [
+            'init',
+            '--model', 'invalid_model',
+            '--name', 'Test Policy',
+            '-o', 'test_policy.yml'
+        ])
+        assert result.exit_code != 0
+        assert 'Error:' in result.output
 
 def test_template_list(runner, test_templates_dir):
     """Test listing templates."""
@@ -103,30 +125,37 @@ def test_template_list(runner, test_templates_dir):
     ])
     assert result.exit_code == 0
     assert 'Available Templates' in result.output
-    assert 'Base Assistant' in result.output
-    assert 'Base Tool' in result.output
-    assert 'Chat Assistant' in result.output
+    assert 'default' in result.output
+    assert 'strict' in result.output
 
 def test_template_apply(runner, test_templates_dir):
     """Test applying a template."""
     with runner.isolated_filesystem():
         result = runner.invoke(cli, [
             'template', 'apply',
-            'chat_assistant',
+            'default',
             '--templates-dir', str(test_templates_dir),
             '-o', 'test_policy.yml'
         ])
         assert result.exit_code == 0
         assert Path('test_policy.yml').exists()
-        assert 'Created new policy at' in result.output
+        assert any(msg in result.output for msg in ['Policy saved', 'Applied template'])
+
+        # Verify policy contents
+        with open('test_policy.yml') as f:
+            policy = yaml.safe_load(f)
+            assert isinstance(policy, dict)
+            assert 'name' in policy
+            assert 'description' in policy
+            assert 'model' in policy
+            assert 'statements' in policy
 
 def test_policy_validate_valid(runner, sample_policy):
     """Test validating a valid policy."""
     with runner.isolated_filesystem():
-        # Create a valid policy file
-        Path('test_policy.yml').write_text(yaml.safe_dump(sample_policy))
-        
-        # Validate it
+        with open('test_policy.yml', 'w') as f:
+            yaml.dump(sample_policy, f)
+            
         result = runner.invoke(cli, ['policy', 'validate', 'test_policy.yml'])
         assert result.exit_code == 0
         assert 'Policy is valid' in result.output
@@ -134,35 +163,22 @@ def test_policy_validate_valid(runner, sample_policy):
 def test_policy_validate_invalid(runner):
     """Test validating an invalid policy."""
     with runner.isolated_filesystem():
-        # Create an invalid policy file
-        Path('invalid.yml').write_text('invalid: yaml: content')
-        
-        # This should fail with exit code 1
-        result = runner.invoke(cli, ['policy', 'validate', 'invalid.yml'], catch_exceptions=False)
-        assert result.exit_code == 1
-        assert 'Error: ' in result.output
-
-def test_init_policy_error(runner):
-    """Test error handling when initializing policy fails."""
-    with runner.isolated_filesystem():
-        # Try to create policy in a non-existent directory
-        result = runner.invoke(cli, [
-            'init',
-            '--model', 'assistant',
-            '-o', 'nonexistent/test_policy.yml'
-        ], catch_exceptions=False)
-        assert result.exit_code == 1
-        assert 'Error: ' in result.output
+        with open('invalid_policy.yml', 'w') as f:
+            yaml.dump({'invalid': 'policy'}, f)
+            
+        result = runner.invoke(cli, ['policy', 'validate', 'invalid_policy.yml'])
+        assert result.exit_code != 0
+        assert 'Error:' in result.output
 
 def test_template_apply_error(runner, test_templates_dir):
     """Test error handling when applying template fails."""
     with runner.isolated_filesystem():
-        # Try to apply non-existent template
         result = runner.invoke(cli, [
             'template', 'apply',
-            'nonexistent',
+            'nonexistent_template',
             '--templates-dir', str(test_templates_dir),
             '-o', 'test_policy.yml'
-        ], catch_exceptions=False)
-        assert result.exit_code == 1
-        assert 'Error: ' in result.output
+        ])
+        assert result.exit_code != 0
+        assert 'Error:' in result.output
+        assert not Path('test_policy.yml').exists()

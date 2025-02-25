@@ -32,6 +32,9 @@ import sys
 import logging
 import time
 from functools import wraps
+import json
+import yaml
+import os
 
 import click
 from rich.console import Console
@@ -48,17 +51,31 @@ console = Console()
 F = TypeVar('F', bound=Callable[..., Any])
 
 def handle_error(func: F) -> F:
-    """Decorator to handle errors in CLI commands."""
+    """Decorator to handle errors in CLI commands with improved context."""
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         try:
             return func(*args, **kwargs)
         except click.UsageError as e:
-            console.print(f"[red]Error: {str(e)}[/red]")
+            console.print(f"[red]Usage Error: {str(e)}[/red]")
+            console.print("[yellow]Run with --help for usage information[/yellow]")
+            sys.exit(1)
+        except ValueError as e:
+            console.print(f"[red]Validation Error: {str(e)}[/red]")
+            logger.debug("Validation failed", exc_info=True)
+            sys.exit(1)
+        except FileNotFoundError as e:
+            console.print(f"[red]File Not Found: {str(e)}[/red]")
+            logger.debug("File not found", exc_info=True)
+            sys.exit(1)
+        except yaml.YAMLError as e:
+            console.print(f"[red]Invalid YAML: {str(e)}[/red]")
+            logger.debug("YAML parsing failed", exc_info=True)
             sys.exit(1)
         except Exception as e:
-            console.print(f"[red]Error: {str(e)}[/red]")
-            logger.exception("Command failed")
+            console.print(f"[red]Error: An unexpected error occurred[/red]")
+            console.print(f"[red]Details: {str(e)}[/red]")
+            logger.exception("Command failed with unexpected error")
             sys.exit(1)
     return cast(F, wrapper)
 
@@ -98,32 +115,43 @@ def cli() -> None:
 @cli.command()
 @click.option('--model', type=click.Choice(['assistant', 'tool']), required=True,
               help='Policy model type')
-@click.option('--output', '-o', type=str, required=True,
+@click.option('-o', '--output', type=str, default='aria_policy.yml',
               help='Output file path')
-@click.option('--templates-dir', type=str,
-              help='Custom templates directory')
+@click.option('--templates-dir', type=str, help='Templates directory')
+@click.option('--name', type=str, default='Default Policy',
+              help='Policy name')
+@click.option('--description', type=str,
+              default='Default ARIA policy configuration',
+              help='Policy description')
 @handle_error
-@with_progress("Initializing new policy...")
-def init(model: str, output: str, templates_dir: Optional[str]) -> None:
+@with_progress("Initializing policy...")
+def init(model: str, output: str, templates_dir: Optional[str], name: str, description: str) -> None:
     """Initialize a new policy."""
+    logger.info(f"Initializing new policy with model '{model}' at '{output}'")
+    
     try:
-        logger.info(f"Initializing new policy with model '{model}' at '{output}'")
-        manager = TemplateManager(templates_dir)
-        policy_model = PolicyModel(model)
+        # Convert model string to enum
+        policy_model = PolicyModel[model.upper()]
         
-        # Create output directory if it doesn't exist
-        output_path = Path(output)
-        if not output_path.parent.exists():
-            raise click.UsageError(f"Directory does not exist: {output_path.parent}")
+        # Create initial policy
+        policy = AIPolicy(
+            name=name,
+            description=description,
+            model=policy_model,
+            statements=[],
+            path_policies=[]
+        )
         
-        template = manager.get_template(f"base_{model}")
-        policy = template.apply()
-        policy.save(output)
+        # Save policy to file
+        policy.to_yaml_file(output)
+        logger.info(f"Policy initialized at {output}")
+        console.print(f"[green]Created new policy '{name}' at {output}[/green]")
         
-        logger.info(f"Created new policy at '{output}'")
-        console.print(f"[green]Created new policy at {output}[/green]")
     except Exception as e:
-        raise click.UsageError(str(e))
+        logger.error(f"Failed to initialize policy: {e}")
+        console.print(f"[red]Error: Failed to initialize policy[/red]")
+        console.print(f"[red]Details: {str(e)}[/red]")
+        sys.exit(1)
 
 @cli.group()
 def template() -> None:
@@ -131,62 +159,51 @@ def template() -> None:
     pass
 
 @template.command(name='list')
-@click.option('--templates-dir', type=str,
-              help='Custom templates directory')
+@click.option('--templates-dir', type=str, help='Templates directory')
 @handle_error
-@with_progress("Loading templates...")
 def list_templates(templates_dir: Optional[str]) -> None:
     """List available templates."""
-    logger.info("Listing available templates")
-    manager = TemplateManager(templates_dir)
+    manager = TemplateManager(templates_dir=templates_dir)
     templates = manager.list_templates()
     
-    table = Table(title="Available Templates")
-    table.add_column("Name", style="cyan")
-    table.add_column("Description")
-    table.add_column("Model", style="magenta")
-    table.add_column("Tags", style="green")
-    
-    for t in templates:
-        table.add_row(
-            t.name,
-            t.description,
-            t.model.value,
-            ", ".join(t.tags) if t.tags else "-"
-        )
-    
-    console.print(table)
+    if not templates:
+        click.echo("No templates found")
+        return
+        
+    click.echo("\nAvailable Templates:")
+    for template in templates:
+        click.echo(f"\n{template.name}:")
+        click.echo(f"  Description: {template.description}")
+        click.echo(f"  Model: {template.model.value}")
 
 @template.command(name='apply')
 @click.argument('name')
-@click.option('--templates-dir', type=str,
-              help='Custom templates directory')
-@click.option('--output', '-o', type=str,
-              help='Output file path')
+@click.option('--templates-dir', type=str, help='Templates directory')
+@click.option('-o', '--output', type=str, help='Output file path')
 @handle_error
 @with_progress("Applying template...")
 def apply(name: str, templates_dir: Optional[str], output: Optional[str]) -> None:
     """Apply a template to create/update policy."""
-    logger.info(f"Applying template '{name}'")
-    manager = TemplateManager(templates_dir)
-    
-    try:
-        policy_model = PolicyModel(name)
-        name = policy_model.value
-    except ValueError:
-        pass  # Not a policy model name, use as-is
-    
+    manager = TemplateManager(templates_dir=templates_dir)
     template = manager.get_template(name)
+    if not template:
+        raise click.UsageError(f"Template '{name}' not found")
+    
+    # Use the template's apply method to create a policy with proper fields
     policy = template.apply()
     
     if output:
-        logger.info(f"Writing policy to '{output}'")
-        output_path = Path(output)
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        policy.save(output)
-        console.print(f"[green]Created new policy at {output}[/green]")
+        # Ensure parent directory exists
+        output_dir = os.path.dirname(os.path.abspath(output))
+        if output_dir:
+            os.makedirs(output_dir, exist_ok=True)
+            
+        # Save policy using its YAML methods
+        policy.to_yaml_file(output)
+        click.echo(f"Policy saved to {output}")
     else:
-        console.print(policy.to_yaml())
+        # Print to stdout if no output file specified
+        click.echo(policy.to_yaml())
 
 @cli.group()
 def policy() -> None:

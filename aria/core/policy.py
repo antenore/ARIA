@@ -32,6 +32,7 @@ from pathlib import Path
 from typing import List, Set, Dict, Any, Optional, Union, TypeVar, Type, cast
 import fnmatch
 import yaml
+import os
 
 from pydantic import BaseModel, Field, ValidationError
 
@@ -62,6 +63,12 @@ class AIAction(str, Enum):
     GENERATE = "generate" # Generate new code
     MODIFY = "modify"   # Modify existing code
     EXECUTE = "execute" # Execute code or commands
+    ALL = "all"  # Special value representing all actions
+
+    @classmethod
+    def all_actions(cls) -> List['AIAction']:
+        """Return all actions except the special ALL value."""
+        return [action for action in cls if action != cls.ALL]
 
 class PolicyEffect(str, Enum):
     """Effect of a policy statement.
@@ -199,6 +206,7 @@ class AIPolicy(BaseModel):
         name: Policy name
         description: Policy description
         model: Policy model determining overall behavior
+        tags: List of policy tags
         statements: List of global policy statements
         path_policies: List of path-specific policies
     """
@@ -206,26 +214,50 @@ class AIPolicy(BaseModel):
     name: str
     description: str
     model: PolicyModel
+    tags: List[str] = Field(default_factory=list)
     statements: List[PolicyStatement] = Field(default_factory=list)
     path_policies: List[PathPolicy] = Field(default_factory=list)
 
     def model_dump(self, **kwargs: Any) -> Dict[str, Any]:
         """Override model_dump to handle enum serialization."""
         data = super().model_dump(**kwargs)
-        data['model'] = self.model.value
-        
-        # Convert enums in statements
-        for statement in data['statements']:
-            statement['effect'] = statement['effect'].value
-            statement['actions'] = [action.value for action in statement['actions']]
-            
-        # Convert enums in path policies
-        for policy in data['path_policies']:
-            for statement in policy['statements']:
-                statement['effect'] = statement['effect'].value
-                statement['actions'] = [action.value for action in statement['actions']]
-                
+        # Convert enums to their values
+        if 'model' in data:
+            data['model'] = data['model'].value
+        if 'statements' in data:
+            for statement in data['statements']:
+                if 'effect' in statement:
+                    statement['effect'] = statement['effect'].value
+                if 'actions' in statement:
+                    statement['actions'] = [
+                        action.value if isinstance(action, AIAction) else action
+                        for action in statement['actions']
+                    ]
+        if 'path_policies' in data:
+            for policy in data['path_policies']:
+                if 'statements' in policy:
+                    for statement in policy['statements']:
+                        if 'effect' in statement:
+                            statement['effect'] = statement['effect'].value
+                        if 'actions' in statement:
+                            statement['actions'] = [
+                                action.value if isinstance(action, AIAction) else action
+                                for action in statement['actions']
+                            ]
         return data
+
+    def to_yaml(self) -> str:
+        """Convert policy to YAML string."""
+        return yaml.dump(self.model_dump(), default_flow_style=False)
+
+    def to_yaml_file(self, file_path: str) -> None:
+        """Save policy to a YAML file.
+        
+        Args:
+            file_path: Path to save the policy to
+        """
+        with open(file_path, 'w') as f:
+            yaml.dump(self.model_dump(), f, default_flow_style=False)
 
     @classmethod
     def from_yaml(cls: Type[T], yaml_str: str) -> T:
@@ -235,35 +267,25 @@ class AIPolicy(BaseModel):
             yaml_str: YAML string to parse
             
         Returns:
-            T: Created policy instance
-            
-        Raises:
-            ValueError: If YAML is invalid
+            New policy instance
         """
         data = yaml.safe_load(yaml_str)
-        if not isinstance(data, dict):
-            raise ValueError("YAML must contain a dictionary")
+        if not data:
+            raise ValueError("Empty YAML string")
         return cls(**data)
 
     @classmethod
-    def from_yaml_file(cls: Type[T], path: Union[str, Path]) -> T:
-        """Create policy from YAML file.
+    def from_yaml_file(cls: Type[T], file_path: str) -> T:
+        """Load policy from a YAML file.
         
         Args:
-            path: Path to YAML file
+            file_path: Path to load policy from
             
         Returns:
-            T: Created policy instance
-            
-        Raises:
-            FileNotFoundError: If file does not exist
-            ValidationError: If file content is invalid
+            New policy instance
         """
-        path = Path(path)
-        if not path.exists():
-            raise FileNotFoundError(f"Policy file not found: {path}")
-            
-        return cls.from_yaml(path.read_text())
+        with open(file_path) as f:
+            return cls.from_yaml(f.read())
 
     @classmethod
     def validate_data(cls, value: Any) -> 'AIPolicy':
@@ -313,24 +335,6 @@ class AIPolicy(BaseModel):
         else:
             raise ValueError(f"Unknown policy model: {self.model}")
 
-    def to_yaml(self) -> str:
-        """Convert policy to YAML string.
-        
-        Returns:
-            str: YAML representation of policy
-        """
-        return yaml.safe_dump(self.model_dump(), sort_keys=False)
-
-    def save(self, path: Union[str, Path]) -> None:
-        """Save policy to YAML file.
-        
-        Args:
-            path: Path to save to
-        """
-        path = Path(path)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(self.to_yaml())
-
     def evaluate(self, action: AIAction, path: Union[str, Path]) -> PolicyEffect:
         """Evaluate policy for an action and path.
         
@@ -374,10 +378,9 @@ class PolicyManager:
         Args:
             project_path: Path to project root
         """
-        self.project_path: Path = Path(project_path)
-        self.policy_file: Path = self.project_path / self.DEFAULT_POLICY_FILE
-        self._policy: Optional[AIPolicy] = None
-
+        self.project_path = os.path.abspath(project_path)
+        self.policy_file = os.path.join(self.project_path, self.DEFAULT_POLICY_FILE)
+    
     def init_project(self, model: PolicyModel = PolicyModel.ASSISTANT) -> AIPolicy:
         """Initialize ARIA in a project.
         
@@ -390,13 +393,13 @@ class PolicyManager:
             AIPolicy: Created policy
         """
         policy = AIPolicy(
-            name=f"{model.value.title()} Policy",
-            description=f"Default {model.value} policy for ARIA",
+            name="Default Policy",
+            description="Default ARIA policy for this project",
             model=model
         )
-        self._save_policy(policy)
+        self.save_policy(policy)
         return policy
-
+    
     def load_policy(self) -> AIPolicy:
         """Load policy from file.
         
@@ -406,17 +409,27 @@ class PolicyManager:
         Raises:
             FileNotFoundError: If policy file does not exist
         """
-        if not self.policy_file.exists():
+        if not os.path.exists(self.policy_file):
             raise FileNotFoundError(f"Policy file not found: {self.policy_file}")
-            
-        self._policy = AIPolicy.from_yaml_file(self.policy_file)
-        return self._policy
-
-    def _save_policy(self, policy: AIPolicy) -> None:
+        
+        with open(self.policy_file) as f:
+            return AIPolicy.from_yaml(f.read())
+    
+    def save_policy(self, policy: AIPolicy) -> None:
         """Save policy to file.
         
         Args:
             policy: Policy to save
         """
-        policy.save(self.policy_file)
-        self._policy = policy
+        policy.to_yaml_file(self.policy_file)
+    
+    def get_description(self, policy: AIPolicy) -> str:
+        """Get a human-readable description of the policy.
+        
+        Args:
+            policy: Policy to describe
+            
+        Returns:
+            str: Policy description
+        """
+        return f"Policy '{policy.name}': {policy.description}"

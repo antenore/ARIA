@@ -42,6 +42,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documentation build failures due to missing mkdocs-minify-plugin
 - Type checking errors in policy and template modules
 - CLI validation command compatibility with new validation methods
+- Consistent path handling across the codebase using `os.path` instead of mixed Path/string operations
+- YAML serialization in policy and template management
+- Type annotations and error handling in core modules
+- Tests for policy and template management
+- CLI output formatting and error messages
 
 ## [1.0.0] - 2025-02-21
 
@@ -70,6 +75,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved type hints and docstrings
 - Enhanced YAML serialization/deserialization
 - Updated validation system
+- Simplified policy YAML handling with consistent methods
+- Improved error messages and validation in template operations
+- Streamlined policy manager interface
 
 ### Removed
 - Legacy test files

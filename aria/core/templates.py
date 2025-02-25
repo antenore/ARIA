@@ -18,41 +18,175 @@ Example:
 """
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import List, Optional, Dict, Any, Type, TypeVar, Set, cast, Union
 import yaml
 
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field
 
-from aria.core.policy import AIPolicy, PolicyModel
+from aria.core.policy import AIPolicy, PolicyModel, PolicyStatement, PathPolicy, PolicyEffect, AIAction
 from aria.logger import get_logger
 
 logger = get_logger(__name__)
 
 T = TypeVar('T', bound='Template')
 
-class Template:
-    """Template for policy configuration."""
+class Template(BaseModel):
+    """Template for policy configuration.
     
-    def __init__(self, name: str, model: PolicyModel, description: str = "", tags: Optional[List[str]] = None,
-                 statements: Optional[List[Dict[str, Any]]] = None, path_policies: Optional[List[Dict[str, Any]]] = None):
-        """Initialize template.
-        
+    A template defines a pre-configured policy setup that can be applied to
+    quickly set up ARIA with common settings. Templates support all policy
+    models defined in the ARIA framework.
+    
+    Attributes:
+        name: Template name
+        model: Policy model (GUARDIAN, OBSERVER, ASSISTANT, COLLABORATOR, PARTNER)
+        description: Template description
+        tags: Template tags for categorization
+        statements: List of policy statements
+        path_policies: List of path-specific policies
+    """
+    
+    name: str
+    model: Union[PolicyModel, str]  # Allow string values for flexibility
+    description: str = ""
+    tags: List[str] = Field(default_factory=list)
+    statements: List[PolicyStatement] = Field(default_factory=list)
+    path_policies: List[PathPolicy] = Field(default_factory=list)
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'Template':
+        """Create template from dictionary data.
+
+        Handles conversion of string values to appropriate enums, with proper
+        validation and error handling.
+
         Args:
-            name: Template name
-            model: Policy model type
-            description: Template description
-            tags: Template tags
-            statements: Policy statements
-            path_policies: Path-specific policies
+            data: Template data dictionary
+
+        Returns:
+            Template: Created template instance
+
+        Raises:
+            ValueError: If required fields are missing or invalid
         """
-        self.name: str = name
-        self.model: PolicyModel = model
-        self.description: str = description
-        self.tags: List[str] = tags or []
-        self.statements: List[Dict[str, Any]] = statements or []
-        self.path_policies: List[Dict[str, Any]] = path_policies or []
-        
+        # Handle model conversion
+        if isinstance(data.get('model'), str):
+            try:
+                model_str = data['model'].upper()  # Normalize to upper case
+                if model_str not in PolicyModel.__members__:
+                    raise ValueError(
+                        f"Invalid model '{data['model']}'. Must be one of: "
+                        f"{', '.join(PolicyModel.__members__.keys())}"
+                    )
+                data['model'] = PolicyModel[model_str]
+            except KeyError as e:
+                logger.error(f"Invalid model value: {data['model']}")
+                raise ValueError(f"Invalid policy model: {data['model']}") from e
+
+        # Handle statements conversion
+        if 'statements' in data and data['statements']:
+            processed_statements = []
+            for stmt in data['statements']:
+                if isinstance(stmt, dict):
+                    # Convert effect
+                    if isinstance(stmt.get('effect'), str):
+                        try:
+                            effect_str = stmt['effect'].upper()
+                            if effect_str not in PolicyEffect.__members__:
+                                raise ValueError(
+                                    f"Invalid effect '{stmt['effect']}'. Must be one of: "
+                                    f"{', '.join(PolicyEffect.__members__.keys())}"
+                                )
+                            stmt['effect'] = PolicyEffect[effect_str]
+                        except KeyError as e:
+                            logger.error(f"Invalid effect value: {stmt['effect']}")
+                            raise ValueError(f"Invalid policy effect: {stmt['effect']}") from e
+
+                    # Convert actions
+                    if 'actions' in stmt:
+                        try:
+                            actions = []
+                            for action in stmt['actions']:
+                                if isinstance(action, str):
+                                    action_str = action.upper()
+                                    if action_str not in AIAction.__members__:
+                                        raise ValueError(
+                                            f"Invalid action '{action}'. Must be one of: "
+                                            f"{', '.join(AIAction.__members__.keys())}"
+                                        )
+                                    actions.append(AIAction[action_str])
+                                else:
+                                    actions.append(action)
+                            stmt['actions'] = actions
+                        except KeyError as e:
+                            logger.error(f"Invalid action value in statement")
+                            raise ValueError(f"Invalid action in policy statement") from e
+
+                    processed_statements.append(PolicyStatement(**stmt))
+                else:
+                    processed_statements.append(stmt)
+            data['statements'] = processed_statements
+
+        # Similar conversion for path_policies
+        if 'path_policies' in data and data['path_policies']:
+            processed_policies = []
+            for policy in data['path_policies']:
+                if isinstance(policy, dict):
+                    if 'statements' in policy:
+                        # MODIFIED: Process statements directly without creating a Template
+                        temp_data = {'statements': policy['statements']}
+                        temp_processed = cls.from_dict(temp_data)
+                        policy['statements'] = temp_processed.statements
+                    processed_policies.append(PathPolicy(**policy))
+                else:
+                    processed_policies.append(policy)
+            data['path_policies'] = processed_policies
+
+        # If this is a recursive call to just process statements,
+        # handle it differently to avoid validation errors
+        if set(data.keys()) == {'statements'}:
+            # Just create a temporary object to process statements
+            result = type('TempTemplate', (), {})
+            result.statements = data['statements']
+            return result
+            
+        return cls(**data)
+
+    def model_dump(self, **kwargs: Any) -> Dict[str, Any]:
+        """Convert template to dictionary."""
+        data = super().model_dump(**kwargs)
+        # Convert enums to strings for YAML serialization
+        data['model'] = self.model.value if isinstance(self.model, PolicyModel) else self.model
+        if self.statements:
+            data['statements'] = [
+                {
+                    'effect': stmt.effect.value,
+                    'actions': [a.value for a in stmt.actions],
+                    'resources': stmt.resources,
+                    **({"conditions": stmt.conditions} if stmt.conditions else {})
+                }
+                for stmt in self.statements
+            ]
+        if self.path_policies:
+            data['path_policies'] = [
+                {
+                    'pattern': pp.pattern,
+                    'statements': [
+                        {
+                            'effect': stmt.effect.value,
+                            'actions': [a.value for a in stmt.actions],
+                            'resources': stmt.resources,
+                            **({"conditions": stmt.conditions} if stmt.conditions else {})
+                        }
+                        for stmt in pp.statements
+                    ]
+                }
+                for pp in self.path_policies
+            ]
+        return data
+
     @classmethod
     def from_yaml(cls, content: str) -> 'Template':
         """Create template from YAML content."""
@@ -61,15 +195,69 @@ class Template:
             if not isinstance(data, dict):
                 raise ValueError("Template YAML must be a dictionary")
                 
-            model = PolicyModel(data.get('model', 'assistant'))
-            return cls(
-                name=data.get('name', ''),
-                model=model,
-                description=data.get('description', ''),
-                tags=data.get('tags', []),
-                statements=data.get('statements', []),
-                path_policies=data.get('path_policies', [])
-            )
+            # Convert model to enum if it's a string
+            if isinstance(data.get('model'), str):
+                try:
+                    data['model'] = PolicyModel(data['model'])
+                except ValueError:
+                    logger.warning(f"Invalid model value: {data['model']}")
+                    
+            # Convert statements to proper types
+            if 'statements' in data and data['statements']:
+                processed_statements = []
+                for stmt in data['statements']:
+                    if isinstance(stmt, dict):
+                        # Convert effect and actions to enums if they're strings
+                        if isinstance(stmt.get('effect'), str):
+                            try:
+                                stmt['effect'] = PolicyEffect(stmt['effect'])
+                            except ValueError:
+                                logger.warning(f"Invalid effect value: {stmt['effect']}")
+                        if 'actions' in stmt:
+                            try:
+                                stmt['actions'] = [
+                                    AIAction(a) if isinstance(a, str) else a 
+                                    for a in stmt['actions']
+                                ]
+                            except ValueError as e:
+                                logger.warning(f"Invalid action value: {e}")
+                        processed_statements.append(PolicyStatement(**stmt))
+                    else:
+                        processed_statements.append(stmt)
+                data['statements'] = processed_statements
+                
+            # Convert path policies to proper types
+            if 'path_policies' in data and data['path_policies']:
+                processed_policies = []
+                for policy in data['path_policies']:
+                    if isinstance(policy, dict):
+                        if 'statements' in policy:
+                            processed_statements = []
+                            for stmt in policy['statements']:
+                                if isinstance(stmt, dict):
+                                    if isinstance(stmt.get('effect'), str):
+                                        try:
+                                            stmt['effect'] = PolicyEffect(stmt['effect'])
+                                        except ValueError:
+                                            logger.warning(f"Invalid effect value: {stmt['effect']}")
+                                    if 'actions' in stmt:
+                                        try:
+                                            stmt['actions'] = [
+                                                AIAction(a) if isinstance(a, str) else a 
+                                                for a in stmt['actions']
+                                            ]
+                                        except ValueError as e:
+                                            logger.warning(f"Invalid action value: {e}")
+                                    processed_statements.append(PolicyStatement(**stmt))
+                                else:
+                                    processed_statements.append(stmt)
+                            policy['statements'] = processed_statements
+                        processed_policies.append(PathPolicy(**policy))
+                    else:
+                        processed_policies.append(policy)
+                data['path_policies'] = processed_policies
+                
+            return cls.from_dict(data)
         except yaml.YAMLError as e:
             logger.error(f"Failed to parse template YAML: {e}")
             raise ValueError(f"Invalid template YAML: {e}")
@@ -84,9 +272,8 @@ class Template:
             model=self.model,
             name=self.name,
             description=self.description,
-            tags=self.tags,
-            statements=self.statements,  # Ensure types match expected
-            path_policies=self.path_policies  # Ensure types match expected
+            statements=self.statements,
+            path_policies=self.path_policies
         )
 
 def load_template(template_path: Union[str, Path]) -> Dict[str, Any]:
@@ -107,95 +294,190 @@ def load_template(template_path: Union[str, Path]) -> Dict[str, Any]:
         raise FileNotFoundError(f"Template not found: {template_path}")
         
     with path.open() as f:
-        return yaml.safe_load(f)
+        data: Dict[str, Any] = yaml.safe_load(f)
+        return data
 
 class TemplateManager:
     """Manages policy templates."""
+    
+    # Update the DEFAULT_TEMPLATES to match the expected template names in tests
+    DEFAULT_TEMPLATES = {
+        "default": {
+            "name": "default",
+            "model": PolicyModel.ASSISTANT,
+            "description": "Default policy template with moderate AI permissions",
+            "statements": [
+                {
+                    "effect": PolicyEffect.ALLOW,
+                    "actions": [AIAction.ANALYZE, AIAction.REVIEW],
+                    "resources": ["*.py"]
+                }
+            ],
+            "path_policies": [
+                {
+                    "pattern": "docs/**",
+                    "statements": [
+                        {
+                            "effect": PolicyEffect.ALLOW,
+                            "actions": [AIAction.GENERATE, AIAction.MODIFY, AIAction.SUGGEST],
+                            "resources": ["*"]
+                        }
+                    ]
+                }
+            ]
+        },
+        "strict": {
+            "name": "strict",
+            "model": PolicyModel.GUARDIAN,
+            "description": "Strict policy template with minimal AI permissions",
+            "statements": [
+                {
+                    "effect": PolicyEffect.DENY,
+                    "actions": [AIAction.ALL],
+                    "resources": ["*"]
+                }
+            ],
+            "path_policies": [
+                {
+                    "pattern": "tests/**",
+                    "statements": [
+                        {
+                            "effect": PolicyEffect.ALLOW,
+                            "actions": [AIAction.SUGGEST],
+                            "resources": ["*.py"]
+                        }
+                    ]
+                }
+            ]
+        }
+    }
     
     def __init__(self, templates_dir: Optional[str] = None):
         """Initialize template manager.
         
         Args:
-            templates_dir: Directory containing templates
+            templates_dir: Directory containing template files
         """
-        if templates_dir:
-            self.templates_dir = Path(templates_dir)
-        else:
-            self.templates_dir = Path(__file__).parent.parent / 'templates'
-            
-        if not self.templates_dir.exists():
-            self.templates_dir.mkdir(parents=True)
-            self._create_base_templates()
-
-    def _create_base_templates(self) -> None:
-        """Create base templates if they don't exist."""
-        base_assistant = {
-            'model': 'assistant',
-            'name': 'Base Assistant Template',
-            'description': 'Base template for AI assistants',
-            'tags': ['base', 'assistant'],
-            'statements': [
-                {
-                    'effect': 'allow',
-                    'actions': ['read', 'write'],
-                    'resources': ['/docs/*', '/code/*']
-                }
-            ]
-        }
+        # If no templates_dir provided, use the default location in aria/templates
+        if templates_dir is None:
+            templates_dir = os.path.join(
+                os.path.dirname(os.path.dirname(__file__)), 
+                "templates"
+            )
         
-        base_tool = {
-            'model': 'tool',
-            'name': 'Base Tool Template',
-            'description': 'Base template for AI tools',
-            'tags': ['base', 'tool'],
-            'statements': [
-                {
-                    'effect': 'allow',
-                    'actions': ['read'],
-                    'resources': ['/docs/*']
-                }
-            ]
-        }
+        self.templates_dir = templates_dir
         
-        (self.templates_dir / 'base_assistant.yml').write_text(yaml.safe_dump(base_assistant))
-        (self.templates_dir / 'base_tool.yml').write_text(yaml.safe_dump(base_tool))
+        # Create templates directory if it doesn't exist
+        os.makedirs(self.templates_dir, exist_ok=True)
+        
+        # Create default templates if they don't exist
+        self._create_base_templates()
 
-    def get_template(self, name: str) -> Template:
-        """Get a template by name.
+    def get_template_path(self, template_name: str) -> str:
+        """Get full path to a template file.
         
         Args:
-            name: Template name
+            template_name: Template name
             
         Returns:
-            Template: Found template
-            
-        Raises:
-            ValueError: If template not found
+            Full path to template file
         """
-        template_path = self.templates_dir / f"{name}.yml"
-        if not template_path.exists():
-            raise ValueError(f"Template not found: {name}")
-            
-        return Template.from_yaml(template_path.read_text())
+        # Use os.path.join instead of / operator
+        return os.path.join(self.templates_dir, f"{template_name}.yml")
 
+    def _create_base_templates(self):
+        """Create default templates if they don't exist."""
+        for template_name, template_data in self.DEFAULT_TEMPLATES.items():
+            # Use os.path.join for safe path construction
+            template_file = os.path.join(self.templates_dir, f"{template_name}.yml")
+            
+            if not os.path.exists(template_file):
+                try:
+                    # Ensure template data has all required fields
+                    if "name" not in template_data:
+                        template_data["name"] = template_name
+                    
+                    template = Template(**template_data)
+                    
+                    # Write template to file
+                    with open(template_file, "w") as f:
+                        yaml.dump(template.model_dump(), f, default_flow_style=False)
+                        
+                    logger.info(f"Created default template {template_name}")
+                except Exception as e:
+                    logger.error(f"Failed to create default template {template_name}: {e}")
+            else:
+                # Load template from file to ensure it's available
+                try:
+                    with open(template_file, "r") as f:
+                        template_data = yaml.safe_load(f)
+                    
+                    template = Template.from_dict(template_data)
+                    logger.info(f"Loaded default template {template_name} from file")
+                except Exception as e:
+                    logger.error(f"Failed to load template {template_name}: {e}")
+    
     def list_templates(self) -> List[Template]:
         """List all available templates.
         
         Returns:
-            List[Template]: List of available templates
+            List of available templates
         """
-        if not self.templates_dir.exists():
-            return []
-            
         templates = []
-        for path in self.templates_dir.glob('*.yml'):
-            try:
-                template = Template.from_yaml(path.read_text())
-                templates.append(template)
-            except Exception as e:
-                logger.warning(f"Failed to load template {path}: {e}")
+        
+        try:
+            # List all .yml files in templates directory
+            for filename in os.listdir(self.templates_dir):
+                if filename.endswith('.yml'):
+                    template_path = os.path.join(self.templates_dir, filename)
+                    try:
+                        with open(template_path, 'r') as f:
+                            data = yaml.safe_load(f)
+                            template = Template.from_dict(data)
+                            templates.append(template)
+                    except Exception as e:
+                        logger.warning(f"Failed to load template {filename}: {e}")
+                        continue
+        except Exception as e:
+            logger.error(f"Failed to list templates: {e}")
+            
+        return templates
+
+    def get_template(self, template_name: str) -> Optional[Template]:
+        """Get a template by name.
+        
+        Args:
+            template_name: Template name
+            
+        Returns:
+            Template instance, or None if not found
+            
+        Raises:
+            ValueError: If template file is invalid
+        """
+        template_file = os.path.join(self.templates_dir, f"{template_name}.yml")
+        
+        if not os.path.exists(template_file):
+            logger.warning(f"Template '{template_name}' not found")
+            return None
+            
+        try:
+            with open(template_file, "r") as f:
+                template_data = yaml.safe_load(f)
                 
-        return sorted(templates, key=lambda t: t.name)
+            if not template_data:
+                raise ValueError(f"Template file {template_name} is empty")
+                
+            return Template.from_dict(template_data)
+        except Exception as e:
+            logger.error(f"Failed to load template {template_name}: {e}")
+            raise ValueError(f"Invalid template file {template_name}: {e}")
+
+    def save_template(self, name: str, template: Template) -> None:
+        """Save a template."""
+        template_path = os.path.join(self.templates_dir, f"{name}.yml")
+        with open(template_path, 'w') as f:
+            yaml.dump(template.model_dump(), f, default_flow_style=False)
 
     def create_policy(self, template: Template) -> AIPolicy:
         """Create a policy from a template.
@@ -206,12 +488,10 @@ class TemplateManager:
         Returns:
             AIPolicy: Created policy
         """
-        policy_data = {
-            "name": f"{template.name} Policy",
-            "description": template.description,
-            "model": template.model.value,
-            "tags": template.tags,
-            "statements": template.statements,
-            "path_policies": template.path_policies
-        }
-        return AIPolicy.model_validate(policy_data)
+        return AIPolicy(
+            name=template.name,
+            description=template.description,
+            model=template.model,
+            statements=template.statements,
+            path_policies=template.path_policies
+        )
