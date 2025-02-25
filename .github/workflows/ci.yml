@@ -14,19 +14,20 @@ jobs:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v3
     
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
         
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -e .[test,docs]
-        pip install pytest pytest-cov flake8 mypy types-PyYAML
-        pip install types-pydantic
+        pip install -r requirements.txt
+        pip install types-PyYAML
+        pip install .[test,docs]
+        pip install pytest pytest-cov flake8 mypy
         
     - name: Lint with flake8
       run: |
@@ -37,22 +38,23 @@ jobs:
         
     - name: Type checking with mypy
       run: |
-        mypy --ignore-missing-imports --no-strict-optional aria/
+        mypy --ignore-missing-imports aria/
         
     - name: Run tests with pytest
       run: |
         pytest tests/ --cov=aria
-
+        
   docs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v2
 
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v2
       with:
-        python-version: '3.13'
+        python-version: '3.x'
 
     - name: Install dependencies
       run: |
