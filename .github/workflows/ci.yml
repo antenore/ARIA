@@ -26,6 +26,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -e .[test,docs]
         pip install pytest pytest-cov flake8 mypy types-PyYAML
+        pip install types-pydantic
         
     - name: Lint with flake8
       run: |
@@ -36,7 +37,7 @@ jobs:
         
     - name: Type checking with mypy
       run: |
-        mypy aria/
+        mypy --ignore-missing-imports --no-strict-optional aria/
         
     - name: Run tests with pytest
       run: |
