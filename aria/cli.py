@@ -113,7 +113,7 @@ def cli() -> None:
     pass
 
 @cli.command()
-@click.option('--model', type=click.Choice(['assistant', 'tool']), required=True,
+@click.option('--model', type=click.Choice(['guardian', 'observer', 'assistant', 'collaborator', 'partner']), required=True,
               help='Policy model type')
 @click.option('-o', '--output', type=str, default='aria_policy.yml',
               help='Output file path')
@@ -172,9 +172,10 @@ def list_templates(templates_dir: Optional[str]) -> None:
         
     click.echo("\nAvailable Templates:")
     for template in templates:
+        model_value = template.model.value if isinstance(template.model, PolicyModel) else template.model
         click.echo(f"\n{template.name}:")
         click.echo(f"  Description: {template.description}")
-        click.echo(f"  Model: {template.model.value}")
+        click.echo(f"  Model: {model_value}")
 
 @template.command(name='apply')
 @click.argument('name')

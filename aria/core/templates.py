@@ -135,10 +135,42 @@ class Template(BaseModel):
             for policy in data['path_policies']:
                 if isinstance(policy, dict):
                     if 'statements' in policy:
-                        # MODIFIED: Process statements directly without creating a Template
-                        temp_data = {'statements': policy['statements']}
-                        temp_processed = cls.from_dict(temp_data)
-                        policy['statements'] = temp_processed.statements
+                        # Process statements for path policy
+                        temp_statements = []
+                        for stmt in policy['statements']:
+                            if isinstance(stmt, dict):
+                                # Process effect
+                                if isinstance(stmt.get('effect'), str):
+                                    try:
+                                        effect_str = stmt['effect'].upper()
+                                        if effect_str not in PolicyEffect.__members__:
+                                            raise ValueError(f"Invalid effect: {stmt['effect']}")
+                                        stmt['effect'] = PolicyEffect[effect_str]
+                                    except KeyError as e:
+                                        logger.error(f"Invalid effect value: {stmt['effect']}")
+                                        raise ValueError(f"Invalid effect: {stmt['effect']}") from e
+                                        
+                                # Process actions
+                                if 'actions' in stmt:
+                                    try:
+                                        actions = []
+                                        for action in stmt['actions']:
+                                            if isinstance(action, str):
+                                                action_str = action.upper()
+                                                if action_str not in AIAction.__members__:
+                                                    raise ValueError(f"Invalid action: {action}")
+                                                actions.append(AIAction[action_str])
+                                            else:
+                                                actions.append(action)
+                                        stmt['actions'] = actions
+                                    except KeyError as e:
+                                        logger.error(f"Invalid action value in statement")
+                                        raise ValueError(f"Invalid action in statement") from e
+                                        
+                                temp_statements.append(PolicyStatement(**stmt))
+                            else:
+                                temp_statements.append(stmt)
+                        policy['statements'] = temp_statements
                     processed_policies.append(PathPolicy(**policy))
                 else:
                     processed_policies.append(policy)
@@ -147,10 +179,12 @@ class Template(BaseModel):
         # If this is a recursive call to just process statements,
         # handle it differently to avoid validation errors
         if set(data.keys()) == {'statements'}:
-            # Just create a temporary object to process statements
-            result = type('TempTemplate', (), {})
-            result.statements = data['statements']
-            return result
+            template = cls(
+                name="temp",
+                model=PolicyModel.ASSISTANT,
+                statements=data['statements']
+            )
+            return template
             
         return cls(**data)
 
@@ -158,7 +192,8 @@ class Template(BaseModel):
         """Convert template to dictionary."""
         data = super().model_dump(**kwargs)
         # Convert enums to strings for YAML serialization
-        data['model'] = self.model.value if isinstance(self.model, PolicyModel) else self.model
+        if isinstance(self.model, PolicyModel):
+            data['model'] = self.model.value
         if self.statements:
             data['statements'] = [
                 {
@@ -198,7 +233,11 @@ class Template(BaseModel):
             # Convert model to enum if it's a string
             if isinstance(data.get('model'), str):
                 try:
-                    data['model'] = PolicyModel(data['model'])
+                    model_upper = data['model'].upper()
+                    if model_upper in PolicyModel.__members__:
+                        data['model'] = PolicyModel[model_upper]
+                    else:
+                        data['model'] = PolicyModel(data['model'])
                 except ValueError:
                     logger.warning(f"Invalid model value: {data['model']}")
                     
@@ -210,15 +249,26 @@ class Template(BaseModel):
                         # Convert effect and actions to enums if they're strings
                         if isinstance(stmt.get('effect'), str):
                             try:
-                                stmt['effect'] = PolicyEffect(stmt['effect'])
+                                effect_upper = stmt['effect'].upper()
+                                if effect_upper in PolicyEffect.__members__:
+                                    stmt['effect'] = PolicyEffect[effect_upper]
+                                else:
+                                    stmt['effect'] = PolicyEffect(stmt['effect'])
                             except ValueError:
                                 logger.warning(f"Invalid effect value: {stmt['effect']}")
                         if 'actions' in stmt:
                             try:
-                                stmt['actions'] = [
-                                    AIAction(a) if isinstance(a, str) else a 
-                                    for a in stmt['actions']
-                                ]
+                                actions = []
+                                for action in stmt['actions']:
+                                    if isinstance(action, str):
+                                        action_upper = action.upper()
+                                        if action_upper in AIAction.__members__:
+                                            actions.append(AIAction[action_upper])
+                                        else:
+                                            actions.append(AIAction(action))
+                                    else:
+                                        actions.append(action)
+                                stmt['actions'] = actions
                             except ValueError as e:
                                 logger.warning(f"Invalid action value: {e}")
                         processed_statements.append(PolicyStatement(**stmt))
@@ -237,15 +287,26 @@ class Template(BaseModel):
                                 if isinstance(stmt, dict):
                                     if isinstance(stmt.get('effect'), str):
                                         try:
-                                            stmt['effect'] = PolicyEffect(stmt['effect'])
+                                            effect_upper = stmt['effect'].upper()
+                                            if effect_upper in PolicyEffect.__members__:
+                                                stmt['effect'] = PolicyEffect[effect_upper]
+                                            else:
+                                                stmt['effect'] = PolicyEffect(stmt['effect'])
                                         except ValueError:
                                             logger.warning(f"Invalid effect value: {stmt['effect']}")
                                     if 'actions' in stmt:
                                         try:
-                                            stmt['actions'] = [
-                                                AIAction(a) if isinstance(a, str) else a 
-                                                for a in stmt['actions']
-                                            ]
+                                            actions = []
+                                            for action in stmt['actions']:
+                                                if isinstance(action, str):
+                                                    action_upper = action.upper()
+                                                    if action_upper in AIAction.__members__:
+                                                        actions.append(AIAction[action_upper])
+                                                    else:
+                                                        actions.append(AIAction(action))
+                                                else:
+                                                    actions.append(action)
+                                            stmt['actions'] = actions
                                         except ValueError as e:
                                             logger.warning(f"Invalid action value: {e}")
                                     processed_statements.append(PolicyStatement(**stmt))
@@ -268,8 +329,20 @@ class Template(BaseModel):
         Returns:
             AIPolicy: Created policy instance
         """
+        # Make sure to convert model to PolicyModel enum if it's a string
+        model = self.model
+        if isinstance(model, str):
+            try:
+                model_upper = model.upper()
+                if model_upper in PolicyModel.__members__:
+                    model = PolicyModel[model_upper]
+                else:
+                    model = PolicyModel(model)
+            except ValueError:
+                raise ValueError(f"Invalid policy model: {model}")
+        
         return AIPolicy(
-            model=self.model,
+            model=model,
             name=self.name,
             description=self.description,
             statements=self.statements,
@@ -300,7 +373,7 @@ def load_template(template_path: Union[str, Path]) -> Dict[str, Any]:
 class TemplateManager:
     """Manages policy templates."""
     
-    # Update the DEFAULT_TEMPLATES to match the expected template names in tests
+    # Default templates with proper enum values
     DEFAULT_TEMPLATES = {
         "default": {
             "name": "default",
@@ -352,7 +425,7 @@ class TemplateManager:
         }
     }
     
-    def __init__(self, templates_dir: Optional[str] = None):
+    def __init__(self, templates_dir: Optional[str] = None) -> None:
         """Initialize template manager.
         
         Args:
@@ -385,7 +458,7 @@ class TemplateManager:
         # Use os.path.join instead of / operator
         return os.path.join(self.templates_dir, f"{template_name}.yml")
 
-    def _create_base_templates(self):
+    def _create_base_templates(self) -> None:
         """Create default templates if they don't exist."""
         for template_name, template_data in self.DEFAULT_TEMPLATES.items():
             # Use os.path.join for safe path construction
@@ -474,7 +547,12 @@ class TemplateManager:
             raise ValueError(f"Invalid template file {template_name}: {e}")
 
     def save_template(self, name: str, template: Template) -> None:
-        """Save a template."""
+        """Save a template.
+        
+        Args:
+            name: Template name
+            template: Template to save
+        """
         template_path = os.path.join(self.templates_dir, f"{name}.yml")
         with open(template_path, 'w') as f:
             yaml.dump(template.model_dump(), f, default_flow_style=False)
@@ -488,10 +566,22 @@ class TemplateManager:
         Returns:
             AIPolicy: Created policy
         """
+        # Make sure to convert model to PolicyModel enum if it's a string
+        model = template.model
+        if isinstance(model, str):
+            try:
+                model_upper = model.upper()
+                if model_upper in PolicyModel.__members__:
+                    model = PolicyModel[model_upper]
+                else:
+                    model = PolicyModel(model)
+            except ValueError:
+                raise ValueError(f"Invalid policy model: {model}")
+                
         return AIPolicy(
             name=template.name,
             description=template.description,
-            model=template.model,
+            model=model,
             statements=template.statements,
             path_policies=template.path_policies
         )

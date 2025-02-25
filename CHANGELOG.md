@@ -24,6 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Template usage guide
   - Configuration guide
 - Documentation dependencies in setup.py extras_require
+- Expanded policy models in CLI to include 'guardian', 'observer', 'collaborator', and 'partner' options
+- Enhanced enum handling in templates with proper validation and case-insensitive matching
+- Improved type safety across template and policy management
 
 ### Changed
 - Reorganized documentation structure for better navigation
@@ -33,6 +36,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Standardized documentation format across all files
 - Renamed policy validation methods for better clarity
 - Added proper type hints throughout the codebase
+- Refactored template processing for better error handling and validation
+- Enhanced YAML serialization with proper enum value handling
+- Improved path handling consistency using os.path
+- Better error messages and logging in template processing
+- Updated CLI to handle policy model display more robustly
 
 ### Fixed
 - Broken documentation links and references
@@ -47,6 +55,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Type annotations and error handling in core modules
 - Tests for policy and template management
 - CLI output formatting and error messages
+- Template processing now properly handles case-insensitive enum values
+- Fixed temporary template creation in Template.from_dict
+- Improved error handling in policy statement processing
 
 ## [1.0.0] - 2025-02-21
 
