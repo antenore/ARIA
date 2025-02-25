@@ -29,7 +29,7 @@ from __future__ import annotations
 
 from enum import Enum
 from pathlib import Path
-from typing import List, Set, Dict, Any, Optional, Union, TypeVar, Type, cast
+from typing import List, Set, Dict, Any, Optional, Union, TypeVar, Type, cast, Callable
 import fnmatch
 import yaml
 import os
@@ -40,7 +40,7 @@ from aria.logger import get_logger
 
 logger = get_logger(__name__)
 
-T = TypeVar('T', bound='BaseModel')
+T = TypeVar('T', bound='AIPolicy')
 
 class AIAction(str, Enum):
     """Possible actions an AI can take on code.
@@ -260,7 +260,7 @@ class AIPolicy(BaseModel):
             yaml.dump(self.model_dump(), f, default_flow_style=False)
 
     @classmethod
-    def from_yaml(cls: Type[T], yaml_str: str) -> T:
+    def from_yaml(cls, yaml_str: str) -> 'AIPolicy':
         """Create an instance from a YAML string.
         
         Args:
@@ -275,7 +275,7 @@ class AIPolicy(BaseModel):
         return cls(**data)
 
     @classmethod
-    def from_yaml_file(cls: Type[T], file_path: str) -> T:
+    def from_yaml_file(cls, file_path: str) -> 'AIPolicy':
         """Load policy from a YAML file.
         
         Args:
@@ -358,6 +358,28 @@ class AIPolicy(BaseModel):
                 
         # Default deny
         return PolicyEffect.DENY
+        
+    def get_permissions(self, path: Union[str, Path]) -> Set[AIAction]:
+        """Get allowed actions for a path.
+        
+        Args:
+            path: Path to check permissions for
+            
+        Returns:
+            Set of allowed actions
+        """
+        # Start with model default permissions
+        allowed = self._get_allowed_actions()
+        
+        # Apply statements and path policies
+        for action in AIAction.all_actions():
+            effect = self.evaluate(action, path)
+            if effect == PolicyEffect.ALLOW and action not in allowed:
+                allowed.add(action)
+            elif effect == PolicyEffect.DENY and action in allowed:
+                allowed.remove(action)
+                
+        return allowed
 
 class PolicyManager:
     """Manages AI participation policies for a project.
