@@ -41,8 +41,44 @@ jobs:
         mypy --ignore-missing-imports aria/
         
     - name: Run tests with pytest
+      id: coverage
       run: |
-        pytest tests/ --cov=aria
+        pytest tests/ --cov=aria --cov-report=xml
+        echo "coverage=$(python -c "import xml.etree.ElementTree as ET; print(float(ET.parse('coverage.xml').getroot().get('line-rate'))*100)")" >> $GITHUB_OUTPUT
+        coverage=$(python -c "import xml.etree.ElementTree as ET; print(float(ET.parse('coverage.xml').getroot().get('line-rate'))*100)")
+        if (( $(echo "$coverage >= 90" | bc -l) )); then
+          echo "color=brightgreen" >> $GITHUB_OUTPUT
+        elif (( $(echo "$coverage >= 80" | bc -l) )); then
+          echo "color=green" >> $GITHUB_OUTPUT
+        elif (( $(echo "$coverage >= 70" | bc -l) )); then
+          echo "color=yellow" >> $GITHUB_OUTPUT
+        elif (( $(echo "$coverage >= 60" | bc -l) )); then
+          echo "color=orange" >> $GITHUB_OUTPUT
+        else
+          echo "color=red" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Generate coverage badge
+      if: success() || failure()
+      uses: schneegans/dynamic-badges-action@v1.6.0
+      with:
+        auth: ${{ secrets.GIST_SECRET }}
+        gistID: ${{ secrets.GIST_ID }}
+        filename: aria_coverage.json
+        label: coverage
+        message: ${{ steps.coverage.outputs.coverage }}%
+        color: ${{ steps.coverage.outputs.color }}
+        
+    - name: Generate CI status badge
+      if: always()
+      uses: schneegans/dynamic-badges-action@v1.6.0
+      with:
+        auth: ${{ secrets.GIST_SECRET }}
+        gistID: ${{ secrets.GIST_ID }}
+        filename: aria_ci_status.json
+        label: CI
+        message: ${{ job.status }}
+        color: ${{ job.status == 'success' && 'brightgreen' || job.status == 'failure' && 'red' || 'yellow' }}
         
   docs:
     runs-on: ubuntu-latest
