@@ -1,5 +1,12 @@
 # ARIA Project TODO List
 
+> **Priority Legend**:
+> - 🔥 **Critical**: Blocking issues or essential features needed for basic functionality
+> - 🔴 **High**: Important features needed for upcoming release
+> - 🟠 **Medium**: Planned features for future releases
+> - 🟢 **Low**: Nice-to-have features or improvements
+> - 💡 **Ideas**: Potential future enhancements
+
 ## 1. Core Framework Implementation
 - [x] Implement Policy Models
   * [x] GUARDIAN model
@@ -43,15 +50,15 @@
 
 ## 3. CI/CD Integration
 - [x] GitHub Actions integration
-- [ ] GitLab CI integration
-- [ ] Jenkins pipeline support
+- [ ] 🟠 GitLab CI integration
+- [ ] 🟢 Jenkins pipeline support
 - [x] Basic CI/CD templates
 - [x] Integration documentation
 - [x] Automated testing workflow
 - [x] Test status badge in README
 - [x] Documentation build workflow
-- [ ] Release workflow
-- [ ] Versioning automation
+- [ ] 🟠 Release workflow
+- [ ] 🟠 Versioning automation
 
 ## 4. Documentation
 - [x] Update API documentation:
@@ -78,7 +85,7 @@
   * [x] Path handling tests
   * [x] YAML serialization tests
 - [ ] Integration tests:
-  * [ ] CI/CD integration
+  * [ ] 🟠 CI/CD integration
   * [x] Policy inheritance
   * [x] Template application
 
@@ -90,35 +97,35 @@
 5. ~~Complete documentation~~
 6. ~~Improve path handling and YAML serialization~~
 7. ~~Add CI/CD integration~~
-8. Complete testing
-9. IDE Integration
-10. Release workflow and versioning
+8. 🔴 Complete testing
+9. 🔥 IDE Integration
+10. 🟠 Release workflow and versioning
 
 ## 7. IDE Integration
 - [x] Basic IDE rules integration
   * [x] Windsurf (.windsurfrules)
   * [x] Cursor (.cursorrules)
-  * [ ] VS Code (planned)
-  * [ ] Neovim (planned)
-  * [ ] Emacs (planned)
-  * [ ] JetBrains IDEs (planned)
+  * [ ] 🟠 VS Code (planned)
+  * [ ] 🟢 Neovim (planned)
+  * [ ] 🟢 Emacs (planned)
+  * [ ] 🟢 JetBrains IDEs (planned)
 - [x] Policy to IDE rules converter
 - [x] Documentation for IDE rules integration
 - [x] IDE ignore file generation (.codeiumignore, .cursorignore)
-- [ ] IDE-specific policy validation
-- [ ] Full SDK plugins
-  * [ ] Windsurf plugin
-  * [ ] Cursor plugin
-  * [ ] VS Code extension
-  * [ ] Neovim plugin
-  * [ ] Emacs package
-  * [ ] JetBrains plugin
-- [ ] Improve policy enforcement
-  * [ ] Enhance ignore file generation to include all sensitive files
-  * [ ] Develop technical enforcement mechanisms beyond ignore files
-  * [ ] Create validation tools to check if AI assistants follow policy rules
-  * [ ] Add runtime policy validation and enforcement
-  * [ ] Implement policy violation detection and reporting
+- [ ] 🟠 IDE-specific policy validation
+- [ ] 🔥 Improve policy enforcement
+  * [ ] 🔥 Enhance ignore file generation to include all sensitive files
+  * [ ] 🔴 Develop technical enforcement mechanisms beyond ignore files
+  * [ ] 🟠 Create validation tools to check if AI assistants follow policy rules
+  * [ ] 🟠 Add runtime policy validation and enforcement
+  * [ ] 🟠 Implement policy violation detection and reporting
+- [ ] 🔴 Full SDK plugins
+  * [ ] 🔴 Windsurf plugin
+  * [ ] 🔴 Cursor plugin
+  * [ ] 🟠 VS Code extension
+  * [ ] 🟢 Neovim plugin
+  * [ ] 🟢 Emacs package
+  * [ ] 🟢 JetBrains plugin
 
 ## 8. Notes
 - Focus on AI participation management

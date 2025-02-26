@@ -153,7 +153,20 @@ ARIA is licensed under the Apache License 2.0. See our [License](docs/guides/lic
 
 ## Project Status
 
-This project is currently in active development. APIs may change.
+This project is currently in **alpha stage** development (v0.1.0). The core concepts and architecture are established, but many features are still being implemented.
+
+### ⚠️ Important Notes for Users and Contributors
+
+- **Limited Maintainer Availability**: This project is maintained on a part-time basis. Response times to issues and pull requests may be delayed.
+- **API Stability**: APIs are subject to change without notice during this early stage.
+- **Current Focus**: 
+  - Improving IDE integration
+  - Enhancing policy enforcement mechanisms
+  - Building comprehensive documentation
+  - Creating a robust test suite
+- **Help Wanted**: See our [ToDo.md](ToDo.md) for prioritized tasks where contributions would be most valuable.
+
+For more details on how to contribute, please see our [Contributing Guide](CONTRIBUTING.md).
 
 ## Author
 

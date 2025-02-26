@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: ARIA Documentation
+    url: https://github.com/antenore/ARIA/blob/main/docs/index.md
+    about: Check if your question is answered in the documentation
+  - name: GitHub Discussions
+    url: https://github.com/antenore/ARIA/discussions
+    about: Please ask and answer questions here
