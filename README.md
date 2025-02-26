@@ -2,6 +2,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Tests](https://github.com/antenore/ARIA/actions/workflows/tests.yml/badge.svg)](https://github.com/antenore/ARIA/actions/workflows/tests.yml)
+[![Project Status: Alpha](https://img.shields.io/badge/Project%20Status-Alpha-orange.svg)](https://github.com/antenore/ARIA)
 
 ## What is ARIA?
 
@@ -181,3 +182,13 @@ For more details on how to contribute, please see our [Contributing Guide](CONTR
 - GitLab: [antenore/ARIA](https://gitlab.com/antenore/ARIA)
 - Documentation: [docs/index.md](docs/index.md)
 - Issues: [GitHub Issues](https://github.com/antenore/ARIA/issues)
+
+## GitHub Topics
+
+When searching for this project, look for these topics:
+- `ai-regulation`
+- `ai-governance`
+- `ai-policy`
+- `artificial-intelligence`
+- `policy-enforcement`
+- `development-tools`
