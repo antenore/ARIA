@@ -15,10 +15,13 @@
 
 ### Release Steps
 
-- [ ] Merge release branch to main
-- [ ] Push changes to GitHub
-- [ ] Push tag to GitHub
-- [ ] Create GitHub Release with release notes
+- [x] Merge release branch to main
+- [x] Push changes to GitHub
+- [x] Push tag to GitHub
+- [x] Prepare GitHub Release notes (GITHUB_RELEASE.md)
+- [x] Create GitHub Release with release notes
+- [x] Build distribution packages
+- [x] Verify package with twine check
 - [ ] Upload package to PyPI
 
 ### Post-Release
