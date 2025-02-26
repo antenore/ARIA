@@ -2,7 +2,6 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![CI](https://github.com/antenore/ARIA/actions/workflows/ci.yml/badge.svg)](https://github.com/antenore/ARIA/actions/workflows/ci.yml)
-[![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/antenore/GIST_ID/raw/aria_coverage.json)](https://github.com/antenore/ARIA/actions/workflows/ci.yml)
 [![Project Status: Alpha](https://img.shields.io/badge/Project%20Status-Alpha-orange.svg)](https://github.com/antenore/ARIA)
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/antenore?label=Sponsor&logo=GitHub)](https://github.com/sponsors/antenore)
 
