@@ -32,7 +32,9 @@ nav:
     - Quick Start: guides/getting-started.md
     - Working with Templates: guides/templates.md
     - Policy Inheritance: guides/inheritance.md
+    - Policy Validation: guides/policy-validation.md
     - CLI Usage: guides/cli.md
+    - Integration: guides/integration.md
     - Contributing: guides/contributing.md
     - License: guides/license.md
   - API Reference:
@@ -55,6 +57,7 @@ nav:
     - Basic Policy: examples/basic-policy.yml
     - Inherited Policy: examples/inherited-policy.yml
     - Template Usage: examples/template-usage.yml
+    - Policy Formats: examples/policy-formats.yml
 
 markdown_extensions:
   - admonition
@@ -77,12 +80,11 @@ plugins:
   - search
   - minify:
       minify_html: true
+  - exclude:
+      glob:
+        - "README.md"
 
 strict: false  # Disable strict mode for now until we fix all warnings
 
 docs_dir: docs
 site_dir: site
-
-# Use proper exclude patterns
-exclude_patterns:
-  - README.md

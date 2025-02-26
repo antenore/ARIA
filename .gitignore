@@ -42,6 +42,11 @@ htmlcov/
 .pytest_cache/
 .tox/
 
+# Documentation
+site/
+docs/_build/
+docs/api/generated/
+
 # Misc
 .DS_Store
 Thumbs.db
