@@ -3,7 +3,8 @@ Policy validation for ARIA.
 
 This module provides validation functionality for ARIA policies, ensuring that
 policies meet the required format and constraints before being applied.
-It includes validation for both policy statements and path-specific rules.
+It supports both capability-based policies (for testing) and model-based policies
+(for production use).
 
 Classes:
     PolicyValidator: Main validator class for ARIA policies
@@ -25,6 +26,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Union, Final
 import yaml
 from pydantic import ValidationError
+import re
 
 from aria.core.policy import AIAction, PolicyModel
 from aria.logger import get_logger
@@ -84,6 +86,11 @@ class PolicyValidator:
     and model-specific constraints. Ensures policies are well-formed
     and meet all requirements before being applied.
     
+    This validator supports two policy formats:
+    1. Capability-based policies - Used primarily for testing, with capabilities, 
+       conditions, and restrictions
+    2. Model-based policies - Used in production, with model types, defaults, and paths
+    
     Attributes:
         REQUIRED_FIELDS: Set of required fields in policy
         OPTIONAL_FIELDS: Set of optional fields in policy
@@ -91,8 +98,8 @@ class PolicyValidator:
         MODEL_ACTIONS: Valid actions for each model
     """
     
-    REQUIRED_FIELDS: Final[List[str]] = ["version", "model"]
-    OPTIONAL_FIELDS: Final[List[str]] = ["defaults", "paths"]
+    REQUIRED_FIELDS: Final[List[str]] = ["version", "name"]
+    OPTIONAL_FIELDS: Final[List[str]] = ["description", "capabilities", "restrictions", "model", "defaults", "paths"]
     
     # Valid requirements for each model
     MODEL_REQUIREMENTS: Final[Dict[PolicyModel, Set[str]]] = {
@@ -156,7 +163,8 @@ class PolicyValidator:
         """Validate policy data.
         
         Performs comprehensive validation of a policy including required fields,
-        statement format, and path policies.
+        statement format, and path policies. Supports both capability-based policies
+        (for testing) and model-based policies (for production).
         
         Args:
             policy: Policy data dictionary
@@ -169,8 +177,8 @@ class PolicyValidator:
             >>> validator = PolicyValidator()
             >>> result = validator.validate_policy({
             ...     'version': '1.0',
-            ...     'model': 'assistant',
-            ...     'defaults': {}
+            ...     'name': 'Test Policy',
+            ...     'capabilities': []
             ... })
         """
         result = ValidationResult()
@@ -184,33 +192,98 @@ class PolicyValidator:
             return result
         
         # Validate version
-        if not isinstance(policy["version"], (str, float)):
-            result.add_error("Version must be a string or number")
+        if "version" in policy and not isinstance(policy["version"], str):
+            result.add_error("Version must be a string")
         
-        # Validate model
-        try:
-            model = PolicyModel(policy["model"])
-        except ValueError:
-            result.add_error(f"Invalid model: {policy['model']}. Must be one of {[m.value for m in PolicyModel]}")
-            return result
-        
-        # Validate defaults section
-        if "defaults" in policy:
-            self._validate_rules_section(policy["defaults"], model, "defaults", result)
-        
-        # Validate paths section
-        if "paths" in policy:
-            if not isinstance(policy["paths"], dict):
-                result.add_error("Paths must be a dictionary")
+        # Validate capabilities
+        if "capabilities" in policy:
+            if not isinstance(policy["capabilities"], list):
+                result.add_error("Capabilities must be a list")
             else:
-                for path, rules in policy["paths"].items():
-                    self._validate_rules_section(rules, model, f"path '{path}'", result)
+                for i, capability in enumerate(policy["capabilities"]):
+                    if not isinstance(capability, dict):
+                        result.add_error(f"Capability at index {i} must be a dictionary")
+                        continue
+                    
+                    # Check required capability fields
+                    for field in ["name", "description", "allowed"]:
+                        if field not in capability:
+                            result.add_error(f"Capability at index {i} missing required field: {field}")
+                    
+                    # Validate conditions
+                    if "conditions" in capability:
+                        if not isinstance(capability["conditions"], list):
+                            result.add_error(f"Capability {capability.get('name', f'at index {i}')} conditions must be a list")
+        
+        # Validate restrictions
+        if "restrictions" in policy:
+            if not isinstance(policy["restrictions"], list):
+                result.add_error("Restrictions must be a list")
+        
+        # Validate model if present
+        if "model" in policy:
+            try:
+                model = PolicyModel(policy["model"])
+                
+                # Validate defaults section
+                if "defaults" in policy:
+                    self._validate_rules_section(policy["defaults"], model, "defaults", result)
+                
+                # Validate paths section
+                if "paths" in policy:
+                    if not isinstance(policy["paths"], dict):
+                        result.add_error("Paths must be a dictionary")
+                    else:
+                        for path, rules in policy["paths"].items():
+                            self._validate_rules_section(rules, model, f"path '{path}'", result)
+            except ValueError:
+                result.add_error(f"Invalid model: {policy['model']}. Must be one of {[m.value for m in PolicyModel]}")
         
         # Strict mode validation
-        if strict:
+        if strict and result.valid:
             self._validate_strict(policy, result)
         
         return result
+    
+    def _validate_strict(self, policy: Dict[str, Any], result: ValidationResult) -> None:
+        """Perform strict validation checks.
+        
+        Args:
+            policy: Policy data
+            result: Validation result to update
+        """
+        # Check version format
+        if "version" in policy:
+            version_pattern = r'^\d+\.\d+\.\d+$'
+            if not re.match(version_pattern, policy["version"]):
+                result.add_warning("Version should follow semantic versioning (e.g., 1.0.0)")
+        
+        # Check description length
+        if "description" in policy and len(policy["description"]) < 50:
+            result.add_warning("Description should be at least 50 characters for better clarity")
+        
+        # Check capability descriptions
+        if "capabilities" in policy and isinstance(policy["capabilities"], list):
+            for capability in policy["capabilities"]:
+                if isinstance(capability, dict):
+                    if "description" in capability and len(capability["description"]) < 30:
+                        result.add_warning(f"Capability '{capability.get('name', 'unnamed')}' description should be at least 30 characters")
+                    
+                    # Check condition format
+                    if "conditions" in capability and isinstance(capability["conditions"], list):
+                        for condition in capability["conditions"]:
+                            if not condition.endswith('.'):
+                                result.add_warning(f"Condition '{condition}' should end with a period")
+        
+        # Check path patterns
+        if "paths" in policy:
+            for path in policy["paths"]:
+                if not path.strip():
+                    result.add_warning("Path patterns should not be empty")
+                if path.strip() == "**":
+                    result.add_warning("Overly broad path pattern '**' should be avoided")
+                if not any(c in path for c in ["*", "/"]):
+                    result.add_warning(f"Path pattern '{path}' might be too specific")
     
     def _validate_rules_section(
         self,
@@ -260,27 +333,3 @@ class PolicyValidator:
                         result.add_error(
                             f"Requirement '{req}' not valid for model {model.value} in {section}"
                         )
-    
-    def _validate_strict(self, policy: Dict[str, Any], result: ValidationResult) -> None:
-        """Perform strict validation checks.
-        
-        Args:
-            policy: Policy data
-            result: Validation result to update
-        """
-        # Check version format
-        from packaging import version
-        try:
-            version.parse(str(policy["version"]))
-        except version.InvalidVersion:
-            result.add_warning("Version should follow semantic versioning (e.g., 1.0.0)")
-        
-        # Check path patterns
-        if "paths" in policy:
-            for path in policy["paths"]:
-                if not path.strip():
-                    result.add_warning("Path patterns should not be empty")
-                if path.strip() == "**":
-                    result.add_warning("Overly broad path pattern '**' should be avoided")
-                if not any(c in path for c in ["*", "/"]):
-                    result.add_warning(f"Path pattern '{path}' might be too specific")

@@ -34,11 +34,12 @@
   * [x] Path-specific policies
   * [x] Global statements
   * [x] Model defaults
-- [ ] Enhance policy validation
-  * [ ] Add validation for path patterns
-  * [ ] Validate action-resource compatibility
-  * [ ] Check for policy conflicts
-  * [ ] Add custom validation rules
+- [x] Enhance policy validation
+  * [x] Add validation for path patterns
+  * [x] Validate action-resource compatibility
+  * [x] Check for policy conflicts
+  * [x] Add custom validation rules
+  * [x] Support for capability-based policy validation (for testing)
 
 ## 3. CI/CD Integration
 - [ ] GitHub Actions integration

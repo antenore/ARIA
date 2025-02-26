@@ -2,7 +2,23 @@
 
 ## Overview
 
-ARIA's policy system provides a flexible and robust framework for managing AI participation in software projects. This document details the technical implementation of the policy system.
+ARIA's policy system provides a flexible and robust framework for managing AI participation in software projects. This document details the technical implementation of the policy system, which supports two distinct policy formats: capability-based (for testing) and model-based (for production).
+
+## Policy Formats
+
+### Capability-Based Format
+Designed primarily for testing and human readability:
+- Focus on specific AI capabilities
+- Clear conditions and restrictions
+- Simplified structure for non-technical users
+- Easier to understand and validate
+
+### Model-Based Format
+Designed for production environments:
+- Integration with code repositories
+- Path-specific rules
+- Predefined models with default settings
+- More granular control over permissions
 
 ## Core Components
 
@@ -41,6 +57,7 @@ Overall policy management:
 - Permission validation
 - Model enforcement
 - Path matching
+- Support for multiple policy formats
 
 ### PolicyManager Class
 Central policy coordination:
@@ -51,32 +68,70 @@ Central policy coordination:
 
 ## Implementation Details
 
-### Policy Configuration
-Policies are defined in YAML format with the following structure:
+### Capability-Based Configuration
 ```yaml
-version: 1.0
+version: 1.0.0
+name: test_policy
+description: A comprehensive test policy
+capabilities:
+  - name: code_generation
+    description: Generate code based on user requirements
+    allowed: true
+    conditions:
+      - Must include appropriate comments.
+      - Must follow project coding standards.
+restrictions:
+  - Must not retain user data beyond the session.
+  - Must inform users about limitations.
+```
+
+### Model-Based Configuration
+```yaml
+version: 1.0.0
+name: production_policy
 model: ASSISTANT
 defaults:
-  allow: []
-  require: []
+  allow:
+    - review
+    - suggest
+  require:
+    - human_review
 paths:
-  'pattern/**':
-    allow: []
-    require: []
+  'src/**/*.py':
+    allow:
+      - generate
+      - modify
+    require:
+      - unit_tests
+  'docs/**':
+    allow:
+      - generate
+      - format
 ```
 
 ### Permission Checking
-1. Path matching using glob patterns
-2. Model-based permission inheritance
-3. Explicit permission validation
-4. Requirement verification
+1. Detect policy format (capability or model-based)
+2. For model-based:
+   - Path matching using glob patterns
+   - Model-based permission inheritance
+   - Explicit permission validation
+   - Requirement verification
+3. For capability-based:
+   - Capability validation
+   - Condition checking
+   - Restriction enforcement
 
 ### Validation Pipeline
-1. Schema validation
-2. Model consistency check
-3. Path pattern validation
-4. Permission conflict resolution
-5. Requirement verification
+1. Common validation:
+   - Required fields check
+   - Type validation
+2. Format-specific validation:
+   - Capability-based validation
+   - Model-based validation
+3. Strict validation (optional):
+   - Enhanced quality checks
+   - Detailed warnings
+4. Result compilation
 
 ### Integration Points
 - CI/CD hooks
@@ -85,6 +140,16 @@ paths:
 - Policy documentation generation
 
 ## Best Practices
+
+### Policy Format Selection
+1. Use capability-based format for:
+   - Testing and development
+   - Non-technical stakeholders
+   - Simple use cases
+2. Use model-based format for:
+   - Production environments
+   - Complex codebases
+   - Integration with CI/CD
 
 ### Policy Definition
 1. Start with a restrictive model
@@ -99,8 +164,8 @@ paths:
 4. Clear documentation
 
 ## Future Enhancements
-1. Policy templates
-2. Advanced inheritance rules
-3. Custom validation rules
-4. Policy analytics
-5. Integration expansions
+1. Enhanced policy analytics
+2. Machine learning-based policy recommendations
+3. Automated policy testing
+4. Integration with more development tools
+5. Policy visualization tools

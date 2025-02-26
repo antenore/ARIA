@@ -23,12 +23,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Policy inheritance guide
   - Template usage guide
   - Configuration guide
+  - Policy validation guide with dual-format support
+  - Integration guide for external systems
 - Documentation dependencies in setup.py extras_require
 - Expanded policy models in CLI to include 'guardian', 'observer', 'collaborator', and 'partner' options
 - Enhanced enum handling in templates with proper validation and case-insensitive matching
 - Improved type safety across template and policy management
 - GitHub Actions CI workflow for automated testing
 - Test status badge in README.md
+- Enhanced policy validator to support both capability-based policies (for testing) and model-based policies (for production)
+- Added validation for capability descriptions, conditions format, and restrictions
+- Added ValidationResult class with comprehensive feedback and error details
+- Added support for strict validation mode with detailed warnings
+- Added policy format examples demonstrating both capability-based and model-based formats
+- Added integration guide with examples for various AI frameworks and CI/CD systems
 
 ### Changed
 - Reorganized documentation structure for better navigation
@@ -49,6 +57,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Global statements follow "last match wins" principle
   - Model defaults act as baseline when no explicit policies match
 - Improved test coverage for policy inheritance and evaluation
+- Updated policy validator to provide more specific error messages for different validation scenarios
+- Updated inheritance documentation to support both capability-based and model-based policies
+- Enhanced CLI documentation with format-specific options and examples
+- Updated template documentation to reflect dual-format support
+- Improved example files to demonstrate both policy formats
+- Enhanced index.md with comprehensive feature descriptions for both policy formats
 
 ### Fixed
 - Broken documentation links and references
@@ -68,6 +82,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved error handling in policy statement processing
 - Policy inheritance now correctly handles path-specific overrides
 - Global statement evaluation now respects statement order
+- Documentation inconsistencies between capability-based and model-based approaches
+- Example policy files now correctly demonstrate both formats
+- Fixed inheritance examples to show proper format-specific inheritance rules
 
 ## [1.0.0] - 2025-02-21
 

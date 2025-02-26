@@ -2,7 +2,7 @@
 
 ## Overview
 
-ARIA's validation system ensures the integrity and correctness of policies and templates.
+ARIA's validation system ensures the integrity and correctness of policies and templates. The system supports multiple policy formats to accommodate both testing and production use cases.
 
 ## Design Goals
 
@@ -21,64 +21,141 @@ ARIA's validation system ensures the integrity and correctness of policies and t
    - Plugin support
    - Easy updates
 
-## System Components
+4. Flexibility
+   - Support for multiple policy formats
+   - Strict and standard validation modes
+   - Customizable validation rules
 
-### Validation Pipeline
+## Policy Formats
+
+ARIA supports two primary policy formats:
+
+### 1. Capability-Based Policies (Testing)
+
+```yaml
+version: "1.0.0"
+name: "Test Policy"
+description: "A comprehensive test policy for validation."
+capabilities:
+  - name: "test_capability"
+    description: "A detailed test capability description."
+    allowed: true
+    conditions:
+      - "Must follow all testing guidelines."
+      - "Must document all test cases."
+restrictions:
+  - "No unauthorized testing."
+  - "Must follow security protocols."
+```
+
+### 2. Model-Based Policies (Production)
+
+```yaml
+version: "1.0.0"
+name: "Production Policy"
+model: "assistant"
+defaults:
+  allow:
+    - "review"
+    - "suggest"
+  require:
+    - "human_review"
+paths:
+  "src/**/*.py":
+    allow:
+      - "analyze"
+      - "review"
+  "tests/**":
+    allow:
+      - "generate"
+      - "modify"
+```
+
+## Validation Pipeline
 
 ```mermaid
 graph TD
-    A[Input] --> B[Schema Validator]
-    B --> C[Type Checker]
-    C --> D[Logic Validator]
-    D --> E[Custom Validators]
-    E --> F[Result]
+    A[Input Policy] --> B[Required Fields Check]
+    B --> C[Type Validation]
+    C --> D[Format-Specific Validation]
+    D --> E1[Capability Validation]
+    D --> E2[Model-Based Validation]
+    E1 --> F[Strict Validation]
+    E2 --> F
+    F --> G[Validation Result]
 ```
 
-### Validation Rules
+## Validation Components
+
+### ValidationResult
+
+The `ValidationResult` class stores validation outcomes:
 
 ```python
-class ValidationRule:
-    """Base class for validation rules."""
+class ValidationResult:
+    """Represents a policy validation result."""
     
-    def validate(self, data: Any) -> bool:
-        """Validate data against rule."""
+    def __init__(self) -> None:
+        """Initialize validation result."""
+        self.valid: bool = True
+        self.errors: List[str] = []
+        self.warnings: List[str] = []
+    
+    def add_error(self, message: str) -> None:
+        """Add an error message."""
         
-    def get_error(self) -> str:
-        """Get error message."""
+    def add_warning(self, message: str) -> None:
+        """Add a warning message."""
 ```
 
-## Implementation Details
+### PolicyValidator
 
-### Schema Validation
+The `PolicyValidator` class performs the actual validation:
 
 ```python
-def validate_schema(data: Dict, schema: Dict) -> bool:
-    """Validate data against JSON schema."""
-    try:
-        jsonschema.validate(data, schema)
-        return True
-    except ValidationError as e:
-        return False
+class PolicyValidator:
+    """Validates AI participation policies."""
+    
+    def validate_file(self, path: Union[str, Path], strict: bool = False) -> ValidationResult:
+        """Validate a policy file."""
+        
+    def validate_policy(self, policy: Dict[str, Any], strict: bool = False) -> ValidationResult:
+        """Validate policy data."""
 ```
 
-### Type Checking
+## Validation Rules
 
-1. Static type hints
-2. Runtime type checking
-3. Custom type validators
+### Common Rules (Both Formats)
+- Required fields: version, name
+- Version must be a string
+- Name must be present
 
-### Error Handling
+### Capability-Based Rules
+- Capabilities must be a list
+- Each capability must have name, description, and allowed fields
+- Conditions must be a list if present
+- Restrictions must be a list if present
 
-1. Clear messages
-2. Error categories
-3. Suggestion system
+### Model-Based Rules
+- Model must be a valid PolicyModel value
+- Actions must be allowed for the specified model
+- Requirements must be valid for the specified model
+- Path patterns must be valid
+
+### Strict Validation Rules
+- Version should follow semantic versioning
+- Description should be sufficiently detailed
+- Capability descriptions should be sufficiently detailed
+- Conditions should end with a period
+- Path patterns should not be too broad or too specific
 
 ## Best Practices
 
-1. Validate early
-2. Fail fast
-3. Clear messages
-4. Comprehensive tests
+1. Always validate policies before applying them
+2. Use strict validation during development
+3. Provide clear error messages to users
+4. Handle validation errors and warnings appropriately
+5. Test with both policy formats if needed
 
 ## See Also
 

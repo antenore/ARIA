@@ -24,6 +24,7 @@ Options:
 - `-m, --model MODEL` - Initial policy model (default: 'assistant')
 - `-o, --output FILE` - Output file for the policy (default: 'aria.yml')
 - `-t, --templates-dir DIR` - Directory containing templates
+- `-f, --format FORMAT` - Policy format: 'capability' or 'model' (default: 'model')
 
 ### Template Management
 
@@ -34,6 +35,9 @@ aria template list [options]
 # or use the shorter alias
 aria ls
 ```
+
+Options:
+- `-f, --format FORMAT` - Filter templates by format: 'capability' or 'model'
 
 Apply a template:
 
@@ -46,16 +50,21 @@ aria apply NAME
 Options:
 - `-t, --templates-dir DIR` - Directory containing templates
 - `-o, --output FILE` - Output file for the policy
+- `-f, --format FORMAT` - Template format: 'capability' or 'model' (default: 'model')
 
 ### Policy Management
 
 Validate a policy file:
 
 ```bash
-aria policy validate FILE
+aria policy validate FILE [options]
 # or use the shorter alias
-aria validate FILE
+aria validate FILE [options]
 ```
+
+Options:
+- `-s, --strict` - Enable strict validation mode
+- `--format FORMAT` - Specify policy format for validation: 'capability', 'model', or 'auto' (default: 'auto')
 
 ## Command Aliases
 
@@ -86,36 +95,56 @@ The CLI provides comprehensive error handling:
 
 ## Examples
 
-1. Create a new policy using the assistant model:
+1. Create a new capability-based policy:
    ```bash
-   aria init -m assistant -o my-policy.yml
+   aria init -f capability -o my-policy.yml
    ```
 
-2. List available templates:
+2. Create a new model-based policy:
+   ```bash
+   aria init -m assistant -f model -o my-policy.yml
+   ```
+
+3. List all available templates:
    ```bash
    aria ls
-   # or
-   aria template list
    ```
 
-3. Apply a template and save to a file:
+4. List only capability-based templates:
    ```bash
-   aria apply basic -o new-policy.yml
-   # or
-   aria template apply basic -o new-policy.yml
+   aria ls -f capability
    ```
 
-4. Validate an existing policy:
+5. Apply a capability-based template:
+   ```bash
+   aria apply basic_capabilities -f capability -o new-policy.yml
+   ```
+
+6. Apply a model-based template:
+   ```bash
+   aria apply basic_model -f model -o new-policy.yml
+   ```
+
+7. Validate a policy with automatic format detection:
    ```bash
    aria validate policy.yml
-   # or
-   aria policy validate policy.yml
+   ```
+
+8. Validate a policy with strict validation:
+   ```bash
+   aria validate policy.yml --strict
+   ```
+
+9. Validate a policy with explicit format:
+   ```bash
+   aria validate policy.yml --format capability
    ```
 
 ## Environment Variables
 
 - `ARIA_TEMPLATES_DIR` - Default templates directory
 - `ARIA_LOG_LEVEL` - Logging level (default: INFO)
+- `ARIA_DEFAULT_FORMAT` - Default policy format (capability or model)
 
 ## Exit Codes
 
