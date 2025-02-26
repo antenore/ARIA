@@ -46,6 +46,9 @@ jobs:
         
   docs:
     runs-on: ubuntu-latest
+    # Only run on main branch push, not on PRs
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: test  # Only build and deploy docs if tests pass
 
     steps:
     - name: Checkout code
@@ -64,3 +67,11 @@ jobs:
     - name: Build documentation
       run: |
         mkdocs build
+
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./site  # The folder the action should deploy
+        force_orphan: true   # Use a single-commit history for the gh-pages branch
+        full_commit_message: 'docs: update documentation site'
