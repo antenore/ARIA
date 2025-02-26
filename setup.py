@@ -8,7 +8,7 @@ long_description = readme_path.read_text() if readme_path.exists() else ""
 
 setup(
     name="aria-framework",
-    version="0.1.0",
+    version="0.1.1-alpha",
     packages=find_packages(),
     install_requires=[
         "pyyaml>=6.0.1",

@@ -155,7 +155,7 @@ ARIA is licensed under the Apache License 2.0. See our [License](docs/guides/lic
 
 ## Project Status
 
-This project is currently in **alpha stage** development (v0.1.0). The core concepts and architecture are established, but many features are still being implemented.
+This project is currently in **alpha stage** development (v0.1.1-alpha). The core concepts and architecture are established, but many features are still being implemented.
 
 ### ⚠️ Important Notes for Users and Contributors
 
