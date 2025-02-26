@@ -37,6 +37,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added support for strict validation mode with detailed warnings
 - Added policy format examples demonstrating both capability-based and model-based formats
 - Added integration guide with examples for various AI frameworks and CI/CD systems
+- IDE integration support:
+  - Policy to IDE rules converter tool (`aria.tools.policy_to_iderules`)
+  - Support for Windsurf (`.windsurfrules`) and Cursor (`.cursorrules`)
+  - Documentation for IDE integration options
+  - Example policy files for IDE rule generation
+  - Framework for future IDE plugin development
 
 ### Changed
 - Reorganized documentation structure for better navigation
@@ -63,6 +69,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated template documentation to reflect dual-format support
 - Improved example files to demonstrate both policy formats
 - Enhanced index.md with comprehensive feature descriptions for both policy formats
+- Renamed CLI command from `aria` to `ariacli` to avoid name conflicts
+- Updated entry points in setup.py and pyproject.toml
+- Enhanced installation documentation with PATH troubleshooting guidance
+- Updated self-testing documentation with IDE rules integration
 
 ### Fixed
 - Broken documentation links and references
@@ -85,6 +95,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documentation inconsistencies between capability-based and model-based approaches
 - Example policy files now correctly demonstrate both formats
 - Fixed inheritance examples to show proper format-specific inheritance rules
+- Command name conflict by renaming from `aria` to `ariacli`
+- Policy model validation to use lowercase model names
+- Self-testing documentation to reflect new command name
 
 ## [1.0.0] - 2025-02-21
 

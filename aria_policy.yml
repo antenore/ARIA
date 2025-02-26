@@ -1,0 +1,44 @@
+name: "ARIA Self-Policy"
+description: "Policy defining how AI can participate in the ARIA project itself"
+version: "1.0"
+model: "assistant"
+
+defaults:
+  allow: ["suggest", "review"]  # Allow suggestions and reviews by default
+  require:
+    - human_review
+    - tests
+
+paths:
+  'aria/**/*.py':
+    allow: 
+      - suggest
+      - modify
+      - generate
+    require:
+      - human_review
+      - tests
+      - documentation
+  
+  'tests/**/*.py':
+    allow:
+      - suggest
+      - modify
+      - generate
+    require:
+      - test_coverage
+  
+  'docs/**/*':
+    allow:
+      - suggest
+      - modify
+      - generate
+    require:
+      - human_review
+      - spell_check
+  
+  '.github/**/*':
+    allow:
+      - suggest
+    require:
+      - human_review

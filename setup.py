@@ -33,15 +33,15 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'aria=aria.cli:cli',
+            'ariacli=aria.cli:cli',
         ],
     },
-    author="ARIA Team",
-    author_email="aria@example.com",
+    author="Antenore Gatta",
+    author_email="antenore@simbiosi.org",
     description="AI Participation Manager",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/aria-framework/aria",
+    url="https://github.com/antenore/ARIA",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",

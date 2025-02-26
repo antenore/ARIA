@@ -42,11 +42,16 @@
   * [x] Support for capability-based policy validation (for testing)
 
 ## 3. CI/CD Integration
-- [ ] GitHub Actions integration
+- [x] GitHub Actions integration
 - [ ] GitLab CI integration
 - [ ] Jenkins pipeline support
-- [ ] Basic CI/CD templates
-- [ ] Integration documentation
+- [x] Basic CI/CD templates
+- [x] Integration documentation
+- [x] Automated testing workflow
+- [x] Test status badge in README
+- [x] Documentation build workflow
+- [ ] Release workflow
+- [ ] Versioning automation
 
 ## 4. Documentation
 - [x] Update API documentation:
@@ -77,6 +82,22 @@
   * [x] Policy inheritance
   * [x] Template application
 
+## 6. IDE Integration
+- [x] Basic IDE rules integration:
+  * [x] Windsurf rules integration
+  * [x] Cursor rules integration
+  * [ ] VS Code rules integration
+  * [ ] Neovim rules integration
+  * [ ] Emacs rules integration
+- [ ] Full SDK integration:
+  * [ ] Windsurf plugin
+  * [ ] Cursor plugin
+  * [ ] VS Code extension
+  * [ ] Neovim plugin
+  * [ ] Emacs package
+- [x] Policy to IDE rules converter
+- [ ] IDE-specific policy validation
+
 ## Priority Order
 1. ~~Core policy models and inheritance~~ 
 2. ~~Complete inheritance implementation~~
@@ -84,8 +105,10 @@
 4. ~~Create basic policy templates~~
 5. ~~Complete documentation~~
 6. ~~Improve path handling and YAML serialization~~
-7. Add CI/CD integration (Current)
+7. ~~Add CI/CD integration~~
 8. Complete testing
+9. IDE Integration
+10. Release workflow and versioning
 
 ## Notes
 - Focus on AI participation management

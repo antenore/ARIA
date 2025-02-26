@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.8"
 license = "Apache-2.0"
 authors = [
-    { name = "ARIA Team" }
+    { name = "Antenore Gatta" }
 ]
 keywords = ["ai", "policy", "regulation", "framework", "governance"]
 classifiers = [
@@ -46,13 +46,13 @@ docs = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/aria-framework/aria"
-Documentation = "https://aria-framework.readthedocs.io"
-Repository = "https://github.com/aria-framework/aria.git"
-Issues = "https://github.com/aria-framework/aria/issues"
+Homepage = "https://github.com/antenore/ARIA"
+Documentation = "https://antenore.readthedocs.io/ARIA"
+Repository = "https://github.com/antenore/ARIA"
+Issues = "https://github.com/antenore/ARIA/issues"
 
 [project.scripts]
-aria = "aria.cli:main"
+ariacli = "aria.cli:main"
 
 [build-system]
 requires = ["hatchling>=1.0.0"]

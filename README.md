@@ -51,26 +51,26 @@ ARIA provides several foundational models for AI participation:
 
 ```bash
 # Install ARIA
-pip install aria-policies
+pip install aria-framework
 
 # Initialize ARIA in your project
-aria init
+ariacli init
 
 # Use a template policy
-aria template apply assistant
+ariacli template apply assistant
 
 # Validate your policy
-aria validate
+ariacli policy validate
 
 # View current permissions
-aria describe
+ariacli describe
 ```
 
 ## Policy Example
 
 ```yaml
 version: 1.0
-model: ASSISTANT
+model: assistant
 
 defaults:
   allow: []  # Deny-all by default
@@ -104,37 +104,39 @@ Project maintainers must:
 ## Documentation
 
 ### Getting Started
-- [Quick Start Guide](guides/getting-started.md)
-- [Working with Templates](guides/templates.md)
-- [Understanding Policy Inheritance](guides/inheritance.md)
-- [Command Line Interface](guides/cli.md)
+- [Quick Start Guide](docs/guides/getting-started.md)
+- [Working with Templates](docs/guides/templates.md)
+- [Understanding Policy Inheritance](docs/guides/inheritance.md)
+- [Command Line Interface](docs/guides/cli.md)
+- [Self-Testing ARIA](docs/guides/self-testing.md)
+- [AI Tool Integrations](docs/guides/tool-integration/index.md)
 
 ### API Reference
-- [Policy API](api/policy.md)
-- [Templates API](api/templates.md)
-- [Validator API](api/validator.md)
-- [CLI API](api/cli.md)
-- [Configuration API](api/config.md)
+- [Policy API](docs/api/policy.md)
+- [Templates API](docs/api/templates.md)
+- [Validator API](docs/api/validator.md)
+- [CLI API](docs/api/cli.md)
+- [Configuration API](docs/api/config.md)
 
 ### Technical Documentation
-- [Policy Architecture](technical/policy.md)
-- [Template System](technical/templates.md)
-- [Validation System](technical/validation.md)
-- [Configuration](technical/configuration.md)
-- [Deployment](technical/deployment.md)
+- [Policy Architecture](docs/technical/policy.md)
+- [Template System](docs/technical/templates.md)
+- [Validation System](docs/technical/validation.md)
+- [Configuration](docs/technical/configuration.md)
+- [Deployment](docs/technical/deployment.md)
 
 ### CI/CD Integration
-- [GitHub Actions](ci/github-actions.md)
-- [GitLab CI](ci/gitlab-ci.md)
-- [Jenkins Pipeline](ci/jenkins.md)
+- [GitHub Actions](docs/ci/github-actions.md)
+- [GitLab CI](docs/ci/gitlab-ci.md)
+- [Jenkins Pipeline](docs/ci/jenkins.md)
 
 ## Contributing
 
-We welcome contributions! Please see our [Contributing Guide](guides/contributing.md) for guidelines.
+We welcome contributions! Please see our [Contributing Guide](docs/guides/contributing.md) for guidelines.
 
 ## License
 
-ARIA is licensed under the Apache License 2.0. See our [License](guides/license.md) for details.
+ARIA is licensed under the Apache License 2.0. See our [License](docs/guides/license.md) for details.
 
 ## Project Status
 

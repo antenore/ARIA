@@ -232,5 +232,9 @@ def validate(policy_file: str) -> None:
         console.print(f"[red]Error: {e}[/red]")
         sys.exit(1)
 
-if __name__ == '__main__':
+def main():
+    """Entry point for command-line execution."""
     cli()
+
+if __name__ == '__main__':
+    main()

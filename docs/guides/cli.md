@@ -7,7 +7,7 @@ ARIA provides a powerful command-line interface (CLI) for managing AI participat
 The CLI follows a simple and intuitive structure:
 
 ```bash
-aria <command> [subcommand] [options]
+ariacli <command> [subcommand] [options]
 ```
 
 ## Basic Commands
@@ -17,7 +17,7 @@ aria <command> [subcommand] [options]
 Create a new policy file:
 
 ```bash
-aria init [options]
+ariacli init [options]
 ```
 
 Options:
@@ -31,9 +31,9 @@ Options:
 List available templates:
 
 ```bash
-aria template list [options]
+ariacli template list [options]
 # or use the shorter alias
-aria ls
+ariacli ls
 ```
 
 Options:
@@ -42,9 +42,9 @@ Options:
 Apply a template:
 
 ```bash
-aria template apply NAME [options]
+ariacli template apply NAME [options]
 # or use the shorter alias
-aria apply NAME
+ariacli apply NAME
 ```
 
 Options:
@@ -57,9 +57,9 @@ Options:
 Validate a policy file:
 
 ```bash
-aria policy validate FILE [options]
+ariacli policy validate FILE [options]
 # or use the shorter alias
-aria validate FILE [options]
+ariacli validate FILE [options]
 ```
 
 Options:
@@ -72,9 +72,9 @@ ARIA provides convenient aliases for commonly used commands:
 
 | Full Command | Alias | Description |
 |-------------|-------|-------------|
-| `aria template list` | `aria ls` | List available templates |
-| `aria template apply` | `aria apply` | Apply a template |
-| `aria policy validate` | `aria validate` | Validate a policy file |
+| `ariacli template list` | `ariacli ls` | List available templates |
+| `ariacli template apply` | `ariacli apply` | Apply a template |
+| `ariacli policy validate` | `ariacli validate` | Validate a policy file |
 
 ## Progress Indicators
 
@@ -97,48 +97,79 @@ The CLI provides comprehensive error handling:
 
 1. Create a new capability-based policy:
    ```bash
-   aria init -f capability -o my-policy.yml
+   ariacli init -f capability -o my-policy.yml
    ```
 
 2. Create a new model-based policy:
    ```bash
-   aria init -m assistant -f model -o my-policy.yml
+   ariacli init -m assistant -f model -o my-policy.yml
    ```
 
 3. List all available templates:
    ```bash
-   aria ls
+   ariacli ls
    ```
 
 4. List only capability-based templates:
    ```bash
-   aria ls -f capability
+   ariacli ls -f capability
    ```
 
 5. Apply a capability-based template:
    ```bash
-   aria apply basic_capabilities -f capability -o new-policy.yml
+   ariacli apply basic_capabilities -f capability -o new-policy.yml
    ```
 
 6. Apply a model-based template:
    ```bash
-   aria apply basic_model -f model -o new-policy.yml
+   ariacli apply basic_model -f model -o new-policy.yml
    ```
 
 7. Validate a policy with automatic format detection:
    ```bash
-   aria validate policy.yml
+   ariacli validate policy.yml
    ```
 
 8. Validate a policy with strict validation:
    ```bash
-   aria validate policy.yml --strict
+   ariacli validate policy.yml --strict
    ```
 
 9. Validate a policy with explicit format:
    ```bash
-   aria validate policy.yml --format capability
+   ariacli validate policy.yml --format capability
    ```
+
+## Additional Tools
+
+ARIA includes additional utility tools:
+
+### Policy to IDE Rules Converter
+
+Convert ARIA policy files to various IDE rules formats:
+
+```bash
+python -m aria.tools.policy_to_iderules <policy_file> [-i <ide>] [-o <output_file>]
+```
+
+Options:
+- `<policy_file>`: Path to ARIA policy file
+- `-i, --ide`: Target IDE (default: windsurf, options: windsurf, cursor, vscode, nvim, emacs)
+- `-o, --output`: Custom output file (default depends on IDE)
+
+Examples:
+```bash
+# Convert a policy to Windsurf rules
+python -m aria.tools.policy_to_iderules docs_protection_policy.yml
+
+# Convert a policy to Cursor rules
+python -m aria.tools.policy_to_iderules aria_policy.yml -i cursor
+
+# Convert a policy to a custom rules file
+python -m aria.tools.policy_to_iderules aria_policy.yml -o custom_rules.txt
+```
+
+This tool helps you quickly implement ARIA policies using existing IDE rule systems. The tool preserves existing content in rules files and only updates the ARIA policy section.
 
 ## Environment Variables
 
