@@ -194,6 +194,12 @@ When searching for this project, look for these topics:
 - `policy-enforcement`
 - `development-tools`
 
+## AI Contribution Acknowledgment
+
+In the spirit of transparency and dogfooding our own principles, portions of this project (including code, documentation, and project governance) were developed with the assistance of AI tools. All AI contributions were made under human supervision and review, following the principles outlined in our own ARIA policies.
+
+This acknowledgment serves as a practical example of how AI participation can be transparently disclosed in software projects. For more details, see [AI_CONTRIBUTIONS.md](AI_CONTRIBUTIONS.md).
+
 ## Sponsorship
 
 ARIA is an open-source project maintained in my free time. If you find this project useful, please consider supporting its development through [GitHub Sponsors](https://github.com/sponsors/antenore).
