@@ -43,6 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Documentation for IDE integration options
   - Example policy files for IDE rule generation
   - Framework for future IDE plugin development
+  - IDE ignore file generation (`.codeiumignore`, `.cursorignore`)
+  - Enhanced protection for policy files and sensitive paths
 
 ### Changed
 - Reorganized documentation structure for better navigation

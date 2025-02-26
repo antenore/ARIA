@@ -9,6 +9,7 @@ Commands:
     init: Initialize a new policy
     template: Manage policy templates
     policy: Manage ARIA policies
+    ide: Manage IDE integration for ARIA policies
 
 Example:
     >>> # Initialize a new policy
@@ -22,6 +23,9 @@ Example:
     >>> 
     >>> # Validate policy
     >>> aria policy validate policy.yml
+    >>> 
+    >>> # Generate IDE rules from policy
+    >>> aria ide rules my_policy.yml
 """
 
 from __future__ import annotations
@@ -105,12 +109,152 @@ def with_progress(description: str) -> Callable[[F], F]:
 
 @click.group()
 def cli() -> None:
-    """ARIA - AI Participation Manager.
-
-    Command-line tool for managing AI participation policies. Supports creating,
-    applying templates to, and validating policies.
+    """ARIA - Artificial Intelligence Regulation Interface & Agreements.
+    
+    A framework for defining and enforcing AI participation policies.
     """
     pass
+
+@cli.group()
+def ide() -> None:
+    """Manage IDE integration for ARIA policies."""
+    pass
+
+
+@ide.command("rules")
+@click.argument("policy_file", type=click.Path(exists=True), required=False)
+@click.option("-i", "--ide", type=click.Choice(["windsurf", "cursor", "vscode", "nvim", "emacs"]),
+              default="windsurf", help="Target IDE (default: windsurf)")
+@click.option("-o", "--output", type=click.Path(), help="Output file (default depends on IDE)")
+def ide_rules(policy_file: Optional[str], ide: str, output: Optional[str]) -> None:
+    """Generate IDE rules from an ARIA policy.
+    
+    If POLICY_FILE is not specified, uses the default aria.yml in the current directory.
+    """
+    from aria.tools.policy_to_iderules import load_policy, policy_to_rules, update_rules_file, IDE_RULE_FILES
+    
+    try:
+        # Use default policy file if not specified
+        if not policy_file:
+            policy_file = "aria.yml"
+            if not os.path.exists(policy_file):
+                console.print(f"[red]Error: Default policy file '{policy_file}' not found.[/red]")
+                sys.exit(1)
+        
+        # Determine output file
+        rules_output_file = output
+        if not rules_output_file:
+            rules_output_file = IDE_RULE_FILES[ide]
+        
+        # Generate rules
+        policy = load_policy(policy_file)
+        rules = policy_to_rules(policy)
+        update_rules_file(rules, rules_output_file)
+        
+        console.print(f"[green]Successfully generated {ide} rules in {rules_output_file}[/green]")
+    except Exception as e:
+        logger.error(f"Failed to generate IDE rules: {e}")
+        console.print(f"[red]Error: {e}[/red]")
+        sys.exit(1)
+
+
+@ide.command("ignore")
+@click.argument("policy_file", type=click.Path(exists=True), required=False)
+@click.option("-i", "--ide", type=click.Choice(["windsurf", "cursor"]),
+              default="windsurf", help="Target IDE (default: windsurf)")
+@click.option("-o", "--output", type=click.Path(), help="Output file (default depends on IDE)")
+def ide_ignore(policy_file: Optional[str], ide: str, output: Optional[str]) -> None:
+    """Generate IDE ignore files from an ARIA policy.
+    
+    If POLICY_FILE is not specified, uses the default aria.yml in the current directory.
+    """
+    from aria.tools.policy_to_iderules import (
+        load_policy, policy_to_ignore_patterns, update_ignore_file, IDE_IGNORE_FILES
+    )
+    
+    try:
+        # Use default policy file if not specified
+        if not policy_file:
+            policy_file = "aria.yml"
+            if not os.path.exists(policy_file):
+                console.print(f"[red]Error: Default policy file '{policy_file}' not found.[/red]")
+                sys.exit(1)
+        
+        # Determine output file
+        ignore_output_file = output
+        if not ignore_output_file and ide in IDE_IGNORE_FILES:
+            ignore_output_file = IDE_IGNORE_FILES[ide]
+        
+        # Generate ignore patterns
+        policy = load_policy(policy_file)
+        ignore_patterns = policy_to_ignore_patterns(policy)
+        update_ignore_file(ignore_patterns, ignore_output_file)
+        
+        console.print(f"[green]Successfully generated {ide} ignore file in {ignore_output_file}[/green]")
+    except Exception as e:
+        logger.error(f"Failed to generate IDE ignore file: {e}")
+        console.print(f"[red]Error: {e}[/red]")
+        sys.exit(1)
+
+
+@ide.command("generate")
+@click.argument("policy_file", type=click.Path(exists=True), required=False)
+@click.option("-i", "--ide", type=click.Choice(["windsurf", "cursor", "vscode", "nvim", "emacs"]),
+              default="windsurf", help="Target IDE (default: windsurf)")
+@click.option("--rules-output", type=click.Path(), help="Output file for rules (default depends on IDE)")
+@click.option("--ignore-output", type=click.Path(), help="Output file for ignore patterns (default depends on IDE)")
+@click.option("--no-ignore", is_flag=True, help="Skip generating ignore file")
+def ide_generate(
+    policy_file: Optional[str], 
+    ide: str, 
+    rules_output: Optional[str], 
+    ignore_output: Optional[str],
+    no_ignore: bool
+) -> None:
+    """Generate both IDE rules and ignore files from an ARIA policy.
+    
+    If POLICY_FILE is not specified, uses the default aria.yml in the current directory.
+    """
+    from aria.tools.policy_to_iderules import (
+        load_policy, policy_to_rules, update_rules_file, IDE_RULE_FILES,
+        policy_to_ignore_patterns, update_ignore_file, IDE_IGNORE_FILES
+    )
+    
+    try:
+        # Use default policy file if not specified
+        if not policy_file:
+            policy_file = "aria.yml"
+            if not os.path.exists(policy_file):
+                console.print(f"[red]Error: Default policy file '{policy_file}' not found.[/red]")
+                sys.exit(1)
+        
+        # Load policy
+        policy = load_policy(policy_file)
+        
+        # Determine output files
+        rules_file = rules_output
+        if not rules_file:
+            rules_file = IDE_RULE_FILES[ide]
+        
+        # Generate rules
+        rules = policy_to_rules(policy)
+        update_rules_file(rules, rules_file)
+        console.print(f"[green]Successfully generated {ide} rules in {rules_file}[/green]")
+        
+        # Generate ignore file if applicable
+        if not no_ignore and ide in IDE_IGNORE_FILES:
+            ignore_file = ignore_output
+            if not ignore_file:
+                ignore_file = IDE_IGNORE_FILES[ide]
+            
+            ignore_patterns = policy_to_ignore_patterns(policy)
+            update_ignore_file(ignore_patterns, ignore_file)
+            console.print(f"[green]Successfully generated {ide} ignore file in {ignore_file}[/green]")
+    
+    except Exception as e:
+        logger.error(f"Failed to generate IDE files: {e}")
+        console.print(f"[red]Error: {e}[/red]")
+        sys.exit(1)
 
 @cli.command()
 @click.option('--model', type=click.Choice(['guardian', 'observer', 'assistant', 'collaborator', 'partner']), required=True,

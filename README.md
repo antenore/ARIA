@@ -18,6 +18,7 @@ In an era where AI is increasingly involved in software development, ARIA offers
 - Policy validation and enforcement tools
 - Integration with popular CI/CD platforms
 - Human-readable policy documentation generation
+- IDE integration for Windsurf, Cursor, and more (coming soon)
 
 ## Policy Models
 
@@ -64,6 +65,12 @@ ariacli policy validate
 
 # View current permissions
 ariacli describe
+
+# Generate IDE rules from policy
+ariacli ide rules --ide windsurf
+
+# Generate IDE ignore files
+ariacli ide ignore --ide cursor
 ```
 
 ## Policy Example
@@ -129,6 +136,12 @@ Project maintainers must:
 - [GitHub Actions](docs/ci/github-actions.md)
 - [GitLab CI](docs/ci/gitlab-ci.md)
 - [Jenkins Pipeline](docs/ci/jenkins.md)
+
+### Tool Integration
+- [IDE Integration](docs/guides/tool-integration/index.md)
+  - [Windsurf](docs/guides/tool-integration/windsurf.md)
+  - [Cursor](docs/guides/tool-integration/cursor.md)
+  - [IDE Rules](docs/guides/tool-integration/ide-rules.md)
 
 ## Contributing
 

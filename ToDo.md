@@ -82,23 +82,7 @@
   * [x] Policy inheritance
   * [x] Template application
 
-## 6. IDE Integration
-- [x] Basic IDE rules integration:
-  * [x] Windsurf rules integration
-  * [x] Cursor rules integration
-  * [ ] VS Code rules integration
-  * [ ] Neovim rules integration
-  * [ ] Emacs rules integration
-- [ ] Full SDK integration:
-  * [ ] Windsurf plugin
-  * [ ] Cursor plugin
-  * [ ] VS Code extension
-  * [ ] Neovim plugin
-  * [ ] Emacs package
-- [x] Policy to IDE rules converter
-- [ ] IDE-specific policy validation
-
-## Priority Order
+## 6. Priority Order
 1. ~~Core policy models and inheritance~~ 
 2. ~~Complete inheritance implementation~~
 3. ~~Add inheritance tests~~
@@ -110,7 +94,27 @@
 9. IDE Integration
 10. Release workflow and versioning
 
-## Notes
+## 7. IDE Integration
+- [x] Basic IDE rules integration
+  * [x] Windsurf (.windsurfrules)
+  * [x] Cursor (.cursorrules)
+  * [ ] VS Code (planned)
+  * [ ] Neovim (planned)
+  * [ ] Emacs (planned)
+  * [ ] JetBrains IDEs (planned)
+- [x] Policy to IDE rules converter
+- [x] Documentation for IDE rules integration
+- [x] IDE ignore file generation (.codeiumignore, .cursorignore)
+- [ ] IDE-specific policy validation
+- [ ] Full SDK plugins
+  * [ ] Windsurf plugin
+  * [ ] Cursor plugin
+  * [ ] VS Code extension
+  * [ ] Neovim plugin
+  * [ ] Emacs package
+  * [ ] JetBrains plugin
+
+## 8. Notes
 - Focus on AI participation management
 - Keep policies simple and human-readable
 - Prioritize practical examples

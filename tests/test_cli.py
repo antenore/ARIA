@@ -81,7 +81,7 @@ def test_cli_help(runner):
     """Test CLI help output."""
     result = runner.invoke(cli, ['--help'])
     assert result.exit_code == 0
-    assert 'ARIA - AI Participation Manager' in result.output
+    assert 'ARIA - Artificial Intelligence Regulation Interface & Agreements' in result.output
 
 def test_init_policy_with_options(runner, test_templates_dir):
     """Test initializing a new policy with specific options."""

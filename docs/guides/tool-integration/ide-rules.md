@@ -99,6 +99,75 @@ Future support is planned for:
 3. **Organize rules** by area of concern
 4. **Update rules** when your ARIA policies change
 
+## IDE Ignore Files
+
+In addition to rules files, many IDEs support ignore files that control which files the AI assistant can access. ARIA can generate these files based on your policy:
+
+- `.codeiumignore` for Windsurf
+- `.cursorignore` for Cursor
+
+These files follow the same syntax as `.gitignore` and help enforce your ARIA policy by:
+
+1. Protecting policy files themselves from AI modification
+2. Restricting AI access to sensitive paths defined in your policy
+3. Protecting IDE rule files from modification
+
+### Generating Ignore Files
+
+You can generate ignore files alongside rules files:
+
+```bash
+python -m aria.tools.policy_to_iderules policy.yml --ignore
+```
+
+This will generate both a rules file and an ignore file appropriate for your selected IDE.
+
+### Ignore File Structure
+
+The generated ignore files include:
+
+```
+# BEGIN ARIA POLICY
+# ARIA Policy: Your Policy Name
+# Your policy description
+
+# Protect ARIA policy files
+*.aria.yaml
+*.aria.yml
+.aria/
+
+# Protect IDE rule files
+.windsurfrules
+.cursorrules
+...
+
+# Protect IDE ignore files
+.codeiumignore
+.cursorignore
+
+# Protected paths from ARIA policy
+/sensitive/path/
+/config/secrets.json
+...
+# END ARIA POLICY
+```
+
+### Benefits of Ignore Files
+
+Using ignore files provides stronger enforcement than rules alone:
+
+- **Technical Enforcement**: While rules rely on the AI assistant's compliance, ignore files technically prevent access
+- **Defense in Depth**: Combining rules and ignore files creates multiple layers of protection
+- **Clear Boundaries**: Explicitly defines which files are off-limits to AI assistance
+
+### Customizing Ignore Patterns
+
+You can customize the generated ignore files by:
+
+1. Editing the patterns outside the ARIA policy section
+2. Modifying your ARIA policy to include different path protections
+3. Using a custom output file with the `--ignore-output` option
+
 ## Future Integration
 
 While this approach works as an immediate solution, a full ARIA SDK would provide:

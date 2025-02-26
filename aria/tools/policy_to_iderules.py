@@ -9,17 +9,23 @@ including Windsurf (.windsurfrules) and Cursor (.cursorrules).
 import argparse
 import os
 import sys
-import yaml
-from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Tuple
 
-# Define supported IDEs and their rule file names
+import yaml
+
+# IDE-specific rule file paths
 IDE_RULE_FILES = {
     "windsurf": ".windsurfrules",
     "cursor": ".cursorrules",
     "vscode": ".vscode/aria-rules.json",  # Future support
     "nvim": ".nvim/aria-rules.lua",       # Future support
     "emacs": ".emacs.d/aria-rules.el"     # Future support
+}
+
+# IDE-specific ignore file paths
+IDE_IGNORE_FILES = {
+    "windsurf": ".codeiumignore",
+    "cursor": ".cursorignore"
 }
 
 def load_policy(policy_file: str) -> Dict[str, Any]:
@@ -44,90 +50,142 @@ def policy_to_rules(policy: Dict[str, Any]) -> List[str]:
     model = policy.get('model', 'assistant').lower()
     if model == 'guardian':
         rules.append("1. AI assistants must not modify any files without explicit permission")
+        rules.append("2. AI assistants must not generate code that could harm the system")
+        rules.append("3. AI assistants must always explain their reasoning before making changes")
+        rules.append("4. AI assistants must prioritize security and safety over functionality")
     elif model == 'observer':
-        rules.append("1. AI assistants may only analyze and review code, not modify it")
-    elif model == 'assistant':
-        rules.append("1. AI assistants may suggest and generate code with human review")
+        rules.append("1. AI assistants must not modify any files under any circumstances")
+        rules.append("2. AI assistants may only provide information and answer questions")
+        rules.append("3. AI assistants must not suggest code changes directly")
     elif model == 'collaborator':
-        rules.append("1. AI assistants may contribute to specific project areas with appropriate permissions")
+        rules.append("1. AI assistants may suggest changes but must get approval first")
+        rules.append("2. AI assistants must explain the reasoning behind their suggestions")
+        rules.append("3. AI assistants should prioritize code quality and maintainability")
     elif model == 'partner':
-        rules.append("1. AI assistants may participate fully with safety guardrails")
+        rules.append("1. AI assistants may make changes to improve code quality")
+        rules.append("2. AI assistants should follow project conventions and standards")
+        rules.append("3. AI assistants should document significant changes they make")
+    else:  # Default to assistant
+        rules.append("1. AI assistants should follow project conventions and standards")
+        rules.append("2. AI assistants should explain significant changes they suggest")
     
-    # Add default rules
-    defaults = policy.get('defaults', {})
-    default_allow = defaults.get('allow', [])
-    default_require = defaults.get('require', [])
-    
-    if not default_allow:
-        rules.append("2. AI assistants must not modify files by default")
-    else:
-        allowed = ", ".join(default_allow)
-        rules.append(f"2. AI assistants may {allowed} by default")
-    
-    if default_require:
-        requirements = ", ".join(default_require)
-        rules.append(f"3. All AI contributions require {requirements}")
+    # Add capability-based rules
+    capabilities = policy.get('capabilities', {})
+    for capability, allowed in capabilities.items():
+        if not allowed:
+            rules.append(f"AI assistants must not {capability}")
     
     # Add path-specific rules
-    rule_index = 4
     paths = policy.get('paths', {})
-    for path_pattern, path_policy in paths.items():
-        allow = path_policy.get('allow', [])
-        require = path_policy.get('require', [])
-        effect = path_policy.get('effect', 'allow')
-        
-        if effect == 'deny' or not allow:
-            rules.append(f"{rule_index}. AI assistants must not modify files in {path_pattern}")
-        else:
-            allowed = ", ".join(allow)
-            rules.append(f"{rule_index}. AI assistants may {allowed} files in {path_pattern}")
-        
-        rule_index += 1
-        
-        if require:
-            requirements = ", ".join(require)
-            rules.append(f"{rule_index}. Changes to {path_pattern} require {requirements}")
-            rule_index += 1
+    for path, path_policy in paths.items():
+        path_model = path_policy.get('model', '').lower()
+        if path_model == 'guardian':
+            rules.append(f"AI assistants must not modify files in {path} without explicit permission")
+        elif path_model == 'observer':
+            rules.append(f"AI assistants must not modify files in {path} under any circumstances")
     
     return rules
 
-def update_rules_file(rules: List[str], output_file: str) -> None:
-    """Update rules file without overwriting existing content."""
-    try:
-        # Create directory if it doesn't exist (for nested paths like .vscode/)
-        if os.path.dirname(output_file):
-            os.makedirs(os.path.dirname(output_file), exist_ok=True)
-        
-        existing_rules = []
-        if os.path.exists(output_file):
-            with open(output_file, 'r') as f:
-                existing_rules = f.readlines()
-                # Remove trailing newlines
-                existing_rules = [line.rstrip() for line in existing_rules]
-        
-        # Add separator if file exists and doesn't end with empty lines
-        if existing_rules and existing_rules[-1].strip():
-            existing_rules.append("")
-            existing_rules.append("# ===== ARIA Policy Rules (Auto-generated) =====")
-        
-        # Combine existing rules with new rules
-        combined_rules = existing_rules if existing_rules else []
-        if not combined_rules:
-            combined_rules = rules
+def policy_to_ignore_patterns(policy: Dict[str, Any]) -> List[str]:
+    """Convert an ARIA policy to IDE ignore patterns."""
+    ignore_patterns = []
+    
+    # Add header
+    ignore_patterns.append(f"# ARIA Policy: {policy.get('name', 'Unnamed Policy')}")
+    ignore_patterns.append(f"# {policy.get('description', 'No description provided')}")
+    ignore_patterns.append("")
+    
+    # Add standard patterns for policy files
+    ignore_patterns.append("# Protect ARIA policy files")
+    ignore_patterns.append("*.aria.yaml")
+    ignore_patterns.append("*.aria.yml")
+    ignore_patterns.append(".aria/")
+    ignore_patterns.append("")
+    
+    # Add IDE rule files to protect them from AI modification
+    ignore_patterns.append("# Protect IDE rule files")
+    for rule_file in IDE_RULE_FILES.values():
+        # Extract just the filename if it's a path
+        filename = os.path.basename(rule_file)
+        if filename:
+            ignore_patterns.append(filename)
         else:
-            # Only add new rules if they don't exist
-            aria_section_start = -1
-            for i, line in enumerate(combined_rules):
-                if "ARIA Policy Rules (Auto-generated)" in line:
-                    aria_section_start = i
-                    break
-            
-            if aria_section_start >= 0:
-                # Replace existing ARIA rules
-                combined_rules = combined_rules[:aria_section_start+1] + rules
+            ignore_patterns.append(rule_file)
+    ignore_patterns.append("")
+    
+    # Add IDE ignore files to protect them from AI modification
+    ignore_patterns.append("# Protect IDE ignore files")
+    for ignore_file in IDE_IGNORE_FILES.values():
+        ignore_patterns.append(ignore_file)
+    ignore_patterns.append("")
+    
+    # Add path-specific patterns
+    paths = policy.get('paths', {})
+    protected_paths = []
+    
+    for path, path_policy in paths.items():
+        path_model = path_policy.get('model', '').lower()
+        if path_model in ['guardian', 'observer']:
+            protected_paths.append(path)
+    
+    if protected_paths:
+        ignore_patterns.append("# Protected paths from ARIA policy")
+        for path in protected_paths:
+            # Ensure the path has the correct format for ignore files
+            if path.endswith('/'):
+                ignore_patterns.append(path)
+            elif os.path.isdir(path):
+                ignore_patterns.append(f"{path}/")
             else:
-                # Append new rules
-                combined_rules.extend(rules)
+                ignore_patterns.append(path)
+    
+    return ignore_patterns
+
+def read_existing_file(file_path: str) -> Tuple[List[str], List[str], List[str]]:
+    """Read an existing file and extract ARIA section."""
+    try:
+        if not os.path.exists(file_path):
+            return [], [], []
+        
+        with open(file_path, 'r') as f:
+            lines = f.read().splitlines()
+        
+        aria_start = None
+        aria_end = None
+        
+        for i, line in enumerate(lines):
+            if line.strip() == "# BEGIN ARIA POLICY":
+                aria_start = i
+            elif line.strip() == "# END ARIA POLICY":
+                aria_end = i
+                break
+        
+        if aria_start is not None and aria_end is not None:
+            before_aria = lines[:aria_start]
+            aria_section = lines[aria_start:aria_end+1]
+            after_aria = lines[aria_end+1:]
+            return before_aria, aria_section, after_aria
+        else:
+            return lines, [], []
+    except Exception as e:
+        print(f"Warning: Could not read existing file {file_path}: {e}", file=sys.stderr)
+        return [], [], []
+
+def update_rules_file(rules: List[str], output_file: str) -> None:
+    """Update an IDE rules file with ARIA policy rules."""
+    try:
+        before_aria, _, after_aria = read_existing_file(output_file)
+        
+        # Create directory if it doesn't exist
+        os.makedirs(os.path.dirname(os.path.abspath(output_file)), exist_ok=True)
+        
+        # Wrap rules in ARIA section markers
+        aria_section = ["# BEGIN ARIA POLICY"]
+        aria_section.extend(rules)
+        aria_section.append("# END ARIA POLICY")
+        
+        # Combine sections
+        combined_rules = before_aria + aria_section + after_aria
         
         with open(output_file, 'w') as f:
             for rule in combined_rules:
@@ -138,23 +196,60 @@ def update_rules_file(rules: List[str], output_file: str) -> None:
         print(f"Error writing rules: {e}", file=sys.stderr)
         sys.exit(1)
 
+def update_ignore_file(patterns: List[str], output_file: str) -> None:
+    """Update an IDE ignore file with ARIA policy patterns."""
+    try:
+        before_aria, _, after_aria = read_existing_file(output_file)
+        
+        # Create directory if it doesn't exist
+        os.makedirs(os.path.dirname(os.path.abspath(output_file)), exist_ok=True)
+        
+        # Wrap patterns in ARIA section markers
+        aria_section = ["# BEGIN ARIA POLICY"]
+        aria_section.extend(patterns)
+        aria_section.append("# END ARIA POLICY")
+        
+        # Combine sections
+        combined_patterns = before_aria + aria_section + after_aria
+        
+        with open(output_file, 'w') as f:
+            for pattern in combined_patterns:
+                f.write(f"{pattern}\n")
+        
+        print(f"Ignore patterns updated in {output_file}")
+    except Exception as e:
+        print(f"Error writing ignore patterns: {e}", file=sys.stderr)
+        sys.exit(1)
+
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Convert ARIA policy to IDE rules")
+    parser = argparse.ArgumentParser(description="Convert ARIA policy to IDE rules and ignore files")
     parser.add_argument("policy_file", help="Path to ARIA policy file")
-    parser.add_argument("-o", "--output", help="Output file (default depends on IDE)")
+    parser.add_argument("-o", "--output", help="Output file for rules (default depends on IDE)")
     parser.add_argument("-i", "--ide", choices=IDE_RULE_FILES.keys(), default="windsurf",
                         help="Target IDE (default: windsurf)")
+    parser.add_argument("--ignore", action="store_true", help="Also generate IDE ignore file")
+    parser.add_argument("--ignore-output", help="Output file for ignore patterns (default depends on IDE)")
     
     args = parser.parse_args()
     
-    # Determine output file
-    output_file = args.output
-    if not output_file:
-        output_file = IDE_RULE_FILES[args.ide]
+    # Determine output files
+    rules_output_file = args.output
+    if not rules_output_file:
+        rules_output_file = IDE_RULE_FILES[args.ide]
     
+    ignore_output_file = args.ignore_output
+    if not ignore_output_file and args.ide in IDE_IGNORE_FILES:
+        ignore_output_file = IDE_IGNORE_FILES[args.ide]
+    
+    # Load policy and generate rules
     policy = load_policy(args.policy_file)
     rules = policy_to_rules(policy)
-    update_rules_file(rules, output_file)
+    update_rules_file(rules, rules_output_file)
+    
+    # Generate ignore file if requested
+    if args.ignore and ignore_output_file:
+        ignore_patterns = policy_to_ignore_patterns(policy)
+        update_ignore_file(ignore_patterns, ignore_output_file)
 
 if __name__ == "__main__":
     main()

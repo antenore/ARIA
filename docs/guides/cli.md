@@ -144,18 +144,80 @@ The CLI provides comprehensive error handling:
 
 ARIA includes additional utility tools:
 
+### IDE Integration Commands
+
+ARIA provides commands for integrating with various IDEs:
+
+```bash
+ariacli ide [command] [options]
+```
+
+Available commands:
+
+#### Generate IDE Rules
+
+```bash
+ariacli ide rules [policy_file] [options]
+```
+
+Options:
+- `policy_file` - Path to ARIA policy file (optional, defaults to aria.yml)
+- `-i, --ide` - Target IDE (default: windsurf, options: windsurf, cursor, vscode, nvim, emacs)
+- `-o, --output` - Custom output file for rules (default depends on IDE)
+
+#### Generate IDE Ignore Files
+
+```bash
+ariacli ide ignore [policy_file] [options]
+```
+
+Options:
+- `policy_file` - Path to ARIA policy file (optional, defaults to aria.yml)
+- `-i, --ide` - Target IDE (default: windsurf, options: windsurf, cursor)
+- `-o, --output` - Custom output file for ignore patterns (default depends on IDE)
+
+#### Generate Both Rules and Ignore Files
+
+```bash
+ariacli ide generate [policy_file] [options]
+```
+
+Options:
+- `policy_file` - Path to ARIA policy file (optional, defaults to aria.yml)
+- `-i, --ide` - Target IDE (default: windsurf, options: windsurf, cursor, vscode, nvim, emacs)
+- `--rules-output` - Custom output file for rules (default depends on IDE)
+- `--ignore-output` - Custom output file for ignore patterns (default depends on IDE)
+- `--no-ignore` - Skip generating ignore file
+
+Examples:
+```bash
+# Generate Windsurf rules from default policy
+ariacli ide rules
+
+# Generate Cursor rules from a specific policy
+ariacli ide rules my_policy.yml -i cursor
+
+# Generate both rules and ignore file for Windsurf
+ariacli ide generate my_policy.yml
+
+# Generate both rules and ignore file for Cursor with custom ignore file
+ariacli ide generate -i cursor --ignore-output .custom_ignore
+```
+
 ### Policy to IDE Rules Converter
 
 Convert ARIA policy files to various IDE rules formats:
 
 ```bash
-python -m aria.tools.policy_to_iderules <policy_file> [-i <ide>] [-o <output_file>]
+python -m aria.tools.policy_to_iderules <policy_file> [-i <ide>] [-o <output_file>] [--ignore] [--ignore-output <file>]
 ```
 
 Options:
 - `<policy_file>`: Path to ARIA policy file
 - `-i, --ide`: Target IDE (default: windsurf, options: windsurf, cursor, vscode, nvim, emacs)
-- `-o, --output`: Custom output file (default depends on IDE)
+- `-o, --output`: Custom output file for rules (default depends on IDE)
+- `--ignore`: Also generate IDE ignore file (.codeiumignore for Windsurf, .cursorignore for Cursor)
+- `--ignore-output`: Custom output file for ignore patterns (default depends on IDE)
 
 Examples:
 ```bash
@@ -167,9 +229,15 @@ python -m aria.tools.policy_to_iderules aria_policy.yml -i cursor
 
 # Convert a policy to a custom rules file
 python -m aria.tools.policy_to_iderules aria_policy.yml -o custom_rules.txt
+
+# Generate both rules and ignore file for Windsurf
+python -m aria.tools.policy_to_iderules aria_policy.yml --ignore
+
+# Generate both rules and ignore file for Cursor with custom ignore file
+python -m aria.tools.policy_to_iderules aria_policy.yml -i cursor --ignore --ignore-output .custom_ignore
 ```
 
-This tool helps you quickly implement ARIA policies using existing IDE rule systems. The tool preserves existing content in rules files and only updates the ARIA policy section.
+This tool helps you quickly implement ARIA policies using existing IDE rule systems. The tool preserves existing content in rules files and only updates the ARIA policy section. When generating ignore files, it creates patterns that protect policy files and sensitive paths based on your ARIA policy.
 
 ## Environment Variables
 
