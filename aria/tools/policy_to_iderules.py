@@ -26,7 +26,7 @@ def load_policy(policy_file: str) -> Dict[str, Any]:
     """Load an ARIA policy file."""
     try:
         with open(policy_file, 'r') as f:
-            return yaml.safe_load(f)
+            return yaml.safe_load(f) or {}
     except Exception as e:
         print(f"Error loading policy file: {e}", file=sys.stderr)
         sys.exit(1)
@@ -138,7 +138,7 @@ def update_rules_file(rules: List[str], output_file: str) -> None:
         print(f"Error writing rules: {e}", file=sys.stderr)
         sys.exit(1)
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Convert ARIA policy to IDE rules")
     parser.add_argument("policy_file", help="Path to ARIA policy file")
     parser.add_argument("-o", "--output", help="Output file (default depends on IDE)")

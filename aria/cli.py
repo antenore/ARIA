@@ -232,7 +232,7 @@ def validate(policy_file: str) -> None:
         console.print(f"[red]Error: {e}[/red]")
         sys.exit(1)
 
-def main():
+def main() -> None:
     """Entry point for command-line execution."""
     cli()
 
