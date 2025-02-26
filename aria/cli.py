@@ -185,6 +185,10 @@ def ide_ignore(policy_file: Optional[str], ide: str, output: Optional[str]) -> N
         if not ignore_output_file and ide in IDE_IGNORE_FILES:
             ignore_output_file = IDE_IGNORE_FILES[ide]
         
+        if not ignore_output_file:
+            console.print("[red]Error: No output file specified and no default for selected IDE[/red]")
+            sys.exit(1)
+            
         # Generate ignore patterns
         policy = load_policy(policy_file)
         ignore_patterns = policy_to_ignore_patterns(policy)
@@ -247,6 +251,10 @@ def ide_generate(
             if not ignore_file:
                 ignore_file = IDE_IGNORE_FILES[ide]
             
+            if not ignore_file:
+                console.print("[red]Error: No output file specified and no default for selected IDE[/red]")
+                sys.exit(1)
+                
             ignore_patterns = policy_to_ignore_patterns(policy)
             update_ignore_file(ignore_patterns, ignore_file)
             console.print(f"[green]Successfully generated {ide} ignore file in {ignore_file}[/green]")

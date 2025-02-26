@@ -1,44 +1,131 @@
 name: "ARIA Self-Policy"
 description: "Policy defining how AI can participate in the ARIA project itself"
 version: "1.0"
-model: "assistant"
+model: "collaborator"
 
 defaults:
-  allow: ["suggest", "review"]  # Allow suggestions and reviews by default
+  allow: ["suggest", "review", "read"]  # AI can suggest, review and read by default
+  deny: ["modify", "generate", "commit"]  # Explicitly deny direct modifications
   require:
     - human_review
+    - human_responsibility
     - tests
 
 paths:
+  # Core code - can be read and suggestions made, but humans must implement changes
   'aria/**/*.py':
     allow: 
       - suggest
+      - review
+      - analyze
+      - read
+    deny:
       - modify
       - generate
+      - commit
     require:
       - human_review
+      - human_responsibility
       - tests
       - documentation
   
+  # Test files - similar to core code
   'tests/**/*.py':
     allow:
       - suggest
+      - review
+      - analyze
+      - read
+    deny:
       - modify
       - generate
+      - commit
     require:
+      - human_review
+      - human_responsibility
       - test_coverage
   
+  # Documentation - can be read and suggestions made
   'docs/**/*':
     allow:
       - suggest
+      - review
+      - analyze
+      - read
+    deny:
       - modify
       - generate
+      - commit
     require:
       - human_review
+      - human_responsibility
       - spell_check
   
+  # GitHub workflows - more restrictive
   '.github/**/*':
     allow:
       - suggest
+      - review
+      - read
+    deny:
+      - modify
+      - generate
+      - commit
     require:
       - human_review
+      - human_responsibility
+
+  # Explicitly protect policy files - AI can read and suggest but not modify
+  '**/*.yml':
+    allow:
+      - suggest
+      - review
+      - read
+    deny:
+      - modify
+      - generate
+      - commit
+    require:
+      - human_review
+      - human_responsibility
+      - validation
+
+  # Protect core configuration - AI can read and suggest but not modify
+  'setup.py':
+    allow:
+      - suggest
+      - review
+      - read
+    deny:
+      - modify
+      - generate
+      - commit
+    require:
+      - human_review
+      - human_responsibility
+      - security_review
+      
+  # Protect IDE rule files - AI should not modify these directly
+  '.windsurfrules':
+    allow:
+      - read
+    deny:
+      - modify
+      - generate
+      - commit
+      - suggest
+    require:
+      - human_review
+      - human_responsibility
+      
+  '.cursorrules':
+    allow:
+      - read
+    deny:
+      - modify
+      - generate
+      - commit
+      - suggest
+    require:
+      - human_review
+      - human_responsibility

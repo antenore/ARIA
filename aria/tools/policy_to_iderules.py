@@ -90,42 +90,37 @@ def policy_to_ignore_patterns(policy: Dict[str, Any]) -> List[str]:
     """Convert an ARIA policy to IDE ignore patterns."""
     ignore_patterns = []
     
-    # Add header
+    # Add header with disclaimer about current limitations
     ignore_patterns.append(f"# ARIA Policy: {policy.get('name', 'Unnamed Policy')}")
     ignore_patterns.append(f"# {policy.get('description', 'No description provided')}")
+    ignore_patterns.append("#")
+    ignore_patterns.append("# DISCLAIMER: This is a basic implementation of ARIA policy enforcement.")
+    ignore_patterns.append("# Full enforcement requires IDE plugins that are currently in development.")
+    ignore_patterns.append("# This ignore file provides only basic protection by preventing AI access to sensitive files.")
     ignore_patterns.append("")
     
     # Add standard patterns for policy files
     ignore_patterns.append("# Protect ARIA policy files")
     ignore_patterns.append("*.aria.yaml")
     ignore_patterns.append("*.aria.yml")
+    ignore_patterns.append("aria_policy.yml")  # Explicitly protect the main policy file
     ignore_patterns.append(".aria/")
     ignore_patterns.append("")
     
-    # Add IDE rule files to protect them from AI modification
-    ignore_patterns.append("# Protect IDE rule files")
-    for rule_file in IDE_RULE_FILES.values():
-        # Extract just the filename if it's a path
-        filename = os.path.basename(rule_file)
-        if filename:
-            ignore_patterns.append(filename)
-        else:
-            ignore_patterns.append(rule_file)
-    ignore_patterns.append("")
+    # Do NOT add IDE rule files to the ignore patterns
+    # We want AI to be able to read them, just not modify them
+    # This is handled by the rules themselves
     
-    # Add IDE ignore files to protect them from AI modification
-    ignore_patterns.append("# Protect IDE ignore files")
-    for ignore_file in IDE_IGNORE_FILES.values():
-        ignore_patterns.append(ignore_file)
-    ignore_patterns.append("")
-    
-    # Add path-specific patterns
+    # Add path-specific patterns only for guardian model or explicitly denied paths
     paths = policy.get('paths', {})
     protected_paths = []
     
     for path, path_policy in paths.items():
+        # Only completely exclude paths with guardian model or explicit deny: ["read"]
         path_model = path_policy.get('model', '').lower()
-        if path_model in ['guardian', 'observer']:
+        deny_actions = path_policy.get('deny', [])
+        
+        if path_model == 'guardian' or 'read' in deny_actions:
             protected_paths.append(path)
     
     if protected_paths:

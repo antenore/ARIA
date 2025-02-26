@@ -78,6 +78,27 @@ Future support is planned for:
 - Neovim (`.nvim/aria-rules.lua`)
 - Emacs (`.emacs.d/aria-rules.el`)
 
+## Limitations of Current Implementation
+
+The current IDE integration has some important limitations to be aware of:
+
+1. **Partial Enforcement**: 
+   - Ignore files (`.codeiumignore`, `.cursorignore`) provide technical enforcement by preventing AI from accessing certain files
+   - Rule files (`.windsurfrules`, `.cursorrules`) provide policy guidance but don't technically prevent modifications
+
+2. **Reliance on AI Behavior**:
+   - Rules rely on the AI assistant following them
+   - There's no technical mechanism to prevent an AI from modifying files it can access
+
+3. **Future Improvements**:
+   - Full IDE plugins are planned that will provide proper technical enforcement
+   - These will intercept and validate AI actions against policies before allowing them
+
+For maximum protection with the current implementation:
+- Use ignore files for truly sensitive files that AI should never access
+- Use rule files for files that AI can read but should not modify
+- Regularly audit AI-generated changes against your policies
+
 ## Advantages and Limitations
 
 ### Advantages

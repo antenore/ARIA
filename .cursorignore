@@ -1,0 +1,15 @@
+# BEGIN ARIA POLICY
+# ARIA Policy: ARIA Self-Policy
+# Policy defining how AI can participate in the ARIA project itself
+#
+# DISCLAIMER: This is a basic implementation of ARIA policy enforcement.
+# Full enforcement requires IDE plugins that are currently in development.
+# This ignore file provides only basic protection by preventing AI access to sensitive files.
+
+# Protect ARIA policy files
+*.aria.yaml
+*.aria.yml
+aria_policy.yml
+.aria/
+
+# END ARIA POLICY

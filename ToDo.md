@@ -113,6 +113,12 @@
   * [ ] Neovim plugin
   * [ ] Emacs package
   * [ ] JetBrains plugin
+- [ ] Improve policy enforcement
+  * [ ] Enhance ignore file generation to include all sensitive files
+  * [ ] Develop technical enforcement mechanisms beyond ignore files
+  * [ ] Create validation tools to check if AI assistants follow policy rules
+  * [ ] Add runtime policy validation and enforcement
+  * [ ] Implement policy violation detection and reporting
 
 ## 8. Notes
 - Focus on AI participation management

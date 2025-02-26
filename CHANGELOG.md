@@ -45,6 +45,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Framework for future IDE plugin development
   - IDE ignore file generation (`.codeiumignore`, `.cursorignore`)
   - Enhanced protection for policy files and sensitive paths
+- Added disclaimer to generated ignore files about current enforcement limitations
+- Added explicit protection for main policy file (aria_policy.yml) in ignore files
+- Added documentation about IDE integration limitations and future improvements
 
 ### Changed
 - Reorganized documentation structure for better navigation
