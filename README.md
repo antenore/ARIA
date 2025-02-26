@@ -3,6 +3,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Tests](https://github.com/antenore/ARIA/actions/workflows/tests.yml/badge.svg)](https://github.com/antenore/ARIA/actions/workflows/tests.yml)
 [![Project Status: Alpha](https://img.shields.io/badge/Project%20Status-Alpha-orange.svg)](https://github.com/antenore/ARIA)
+[![GitHub Sponsors](https://img.shields.io/github/sponsors/antenore?label=Sponsor&logo=GitHub)](https://github.com/sponsors/antenore)
 
 ## What is ARIA?
 
@@ -192,3 +193,15 @@ When searching for this project, look for these topics:
 - `artificial-intelligence`
 - `policy-enforcement`
 - `development-tools`
+
+## Sponsorship
+
+ARIA is an open-source project maintained in my free time. If you find this project useful, please consider supporting its development through [GitHub Sponsors](https://github.com/sponsors/antenore).
+
+Your sponsorship helps:
+- Maintain and improve ARIA
+- Add new features and integrations
+- Create better documentation
+- Provide support to users
+
+Thank you for your support! ❤️
