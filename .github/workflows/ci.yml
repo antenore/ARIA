@@ -71,7 +71,9 @@ jobs:
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        # This requires setting up a deploy key with write access
+        # See docs/GITHUB_PAGES_SETUP.md for instructions
+        deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
         publish_dir: ./site  # The folder the action should deploy
         force_orphan: true   # Use a single-commit history for the gh-pages branch
         full_commit_message: 'docs: update documentation site'

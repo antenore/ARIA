@@ -2,7 +2,42 @@
 
 To ensure the documentation is properly deployed to GitHub Pages, follow these steps:
 
-1. First, commit and push the updated CI workflow to your repository
+## 1. Set up a Deploy Key for GitHub Actions
+
+The GitHub Actions workflow needs permission to push to your repository. Here's how to set up a deploy key:
+
+1. Generate a new SSH key pair on your local machine (do not use your personal SSH key):
+   ```bash
+   ssh-keygen -t ed25519 -C "github-actions-deploy@github.com" -f gh-pages-deploy
+   ```
+   This will create two files: `gh-pages-deploy` (private key) and `gh-pages-deploy.pub` (public key)
+
+2. Add the public key to your repository:
+   - Go to your GitHub repository
+   - Click on "Settings" > "Deploy keys" > "Add deploy key"
+   - Title: "GitHub Actions Deploy Key"
+   - Key: Paste the contents of `gh-pages-deploy.pub`
+   - Check "Allow write access"
+   - Click "Add key"
+
+3. Add the private key as a repository secret:
+   - Go to your GitHub repository
+   - Click on "Settings" > "Secrets and variables" > "Actions"
+   - Click "New repository secret"
+   - Name: `ACTIONS_DEPLOY_KEY`
+   - Value: Paste the contents of the `gh-pages-deploy` file (the private key)
+   - Click "Add secret"
+
+4. Delete the key files from your local machine after adding them to GitHub:
+   ```bash
+   rm gh-pages-deploy gh-pages-deploy.pub
+   ```
+
+## 2. Configure GitHub Pages
+
+After setting up the deploy key and pushing the updated workflow:
+
+1. Commit and push the updated CI workflow to your repository
 2. The GitHub Actions workflow will automatically create a `gh-pages` branch when it runs
 3. After the workflow completes successfully, go to your GitHub repository settings
 4. Navigate to "Pages" in the left sidebar
@@ -16,6 +51,7 @@ To ensure the documentation is properly deployed to GitHub Pages, follow these s
 - You should no longer use the `docs` folder as the source for GitHub Pages
 - The documentation will be automatically updated whenever changes are pushed to the main branch
 - The deployment only happens after all tests pass
+- The deploy key is specific to this repository and cannot be used elsewhere
 
 ## Troubleshooting
 
@@ -25,7 +61,7 @@ If the documentation is not updating:
 2. Verify that the GitHub Pages settings are configured to use the `gh-pages` branch
 3. Clear your browser cache or try viewing the site in an incognito/private window
 4. Check if there are any GitHub Pages build errors in the repository settings
-5. Ensure the repository has the necessary permissions to create and update the `gh-pages` branch
+5. Ensure the deploy key has been properly set up with write access
 
 ## Manual Deployment
 
