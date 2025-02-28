@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Development version 0.1.2-dev
+- Official ARIA logo (assets/ARIA-Logo.svg)
+- Adaptive ARIA logo that changes color based on background (assets/ARIA-Logo-adaptive.svg)
+
+### Changed
+- Consolidated task lists by merging DEVELOP_TODO.md into ToDo.md
+- Updated ToDo.md with more detailed task breakdowns for v0.1.2-dev
+
+### Planned
+- Full SDK plugins for various IDEs
+- Improved policy validation tools
+- Runtime policy enforcement mechanisms
+- Expanded multiplatform support
+
 ## [0.1.1-alpha] - 2025-02-26
 
 ### Added
