@@ -1,0 +1,33 @@
+name: basic_assistant
+version: 1.0.0
+description: Basic AI assistant policy
+
+# Core settings
+settings:
+  model: gpt-4
+  temperature: 0.7
+  max_tokens: 2000
+
+# Permissions
+permissions:
+  - read_input
+  - generate_text
+  - format_output
+
+# Safety guardrails
+safety:
+  content_filtering: true
+  max_requests_per_minute: 60
+  require_user_confirmation: true
+
+# Error handling
+error_handling:
+  retry_attempts: 3
+  timeout_seconds: 30
+  fallback_model: gpt-3.5-turbo
+
+# Logging
+logging:
+  level: info
+  format: json
+  destination: stdout

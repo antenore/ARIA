@@ -1,0 +1,125 @@
+# Example 1: Capability-Based Policy Inheritance
+
+# Base Policy
+---
+name: basic_assistant
+version: 1.0.0
+description: Basic AI assistant policy with core capabilities
+capabilities:
+  - name: text_generation
+    description: Generate text responses
+    allowed: true
+    conditions:
+      - Must follow content guidelines.
+      - Must maintain conversation context.
+  - name: information_retrieval
+    description: Retrieve and present information
+    allowed: true
+    conditions:
+      - Must cite sources when appropriate.
+restrictions:
+  - Must not generate harmful content.
+  - Must not retain user data beyond session.
+  - Must disclose AI nature when asked.
+---
+
+# Inherited Policy (extends basic_assistant)
+---
+name: code_assistant
+version: 1.0.0
+description: Code-focused AI assistant policy
+inherits: basic_assistant
+capabilities:
+  - name: text_generation
+    description: Generate text responses
+    allowed: true
+    conditions:
+      - Must follow content guidelines.
+      - Must maintain conversation context.
+      - Must use technical language when appropriate.  # Added condition
+  - name: code_analysis
+    description: Analyze and explain code
+    allowed: true
+    conditions:
+      - Must not execute untrusted code.
+      - Must highlight security concerns.
+  - name: code_generation
+    description: Generate code samples and solutions
+    allowed: true
+    conditions:
+      - Must follow best practices.
+      - Must include comments.
+      - Must validate inputs.
+restrictions:
+  - Must not generate harmful content.
+  - Must not retain user data beyond session.
+  - Must disclose AI nature when asked.
+  - Must not generate code for malicious purposes.  # Added restriction
+  - Must warn about limitations in generated code.  # Added restriction
+---
+
+# Example 2: Model-Based Policy Inheritance
+
+# Base Policy
+---
+name: base_model_policy
+version: 1.0.0
+description: Base policy for development assistants
+model: assistant
+defaults:
+  allow:
+    - review
+    - suggest
+    - explain
+  require:
+    - human_review
+    - logging
+paths:
+  "**/*.md":
+    allow:
+      - generate
+      - modify
+  "src/**/*.py":
+    allow:
+      - analyze
+    require:
+      - testing
+---
+
+# Inherited Policy (extends base_model_policy)
+---
+name: advanced_model_policy
+version: 1.0.0
+description: Enhanced policy for senior developers
+inherits: base_model_policy
+defaults:
+  allow:
+    - review
+    - suggest
+    - explain
+    - generate  # Added permission
+  require:
+    - human_review
+    - logging
+    - documentation  # Added requirement
+paths:
+  "**/*.md":
+    allow:
+      - generate
+      - modify
+      - restructure  # Added permission
+  "src/**/*.py":
+    allow:
+      - analyze
+      - modify  # Added permission
+      - refactor  # Added permission
+    require:
+      - testing
+      - code_review  # Added requirement
+  "config/**":  # New path pattern
+    allow:
+      - analyze
+      - suggest
+    require:
+      - security_review
+---
