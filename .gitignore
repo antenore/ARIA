@@ -23,6 +23,10 @@ wheels/
 .installed.cfg
 *.egg
 
+# Project specific
+assets/WIP-*
+assets/index.html
+
 # Virtual Environment
 venv/
 env/

@@ -1,3 +1,8 @@
+
+<div align="center">
+  <img src="assets/ARIA-Logo-adaptive.svg" alt="ARIA Logo" width="400" height="400">
+</div>
+
 # ARIA (Artificial Intelligence Regulation Interface & Agreements)
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -155,7 +160,7 @@ ARIA is licensed under the Apache License 2.0. See our [License](docs/guides/lic
 
 ## Project Status
 
-This project is currently in **alpha stage** development (v0.1.1-alpha). The core concepts and architecture are established, but many features are still being implemented.
+This project is currently in **alpha stage** development (v0.1.2-dev). The core concepts and architecture are established, but many features are still being implemented.
 
 ### ⚠️ Important Notes for Users and Contributors
 
