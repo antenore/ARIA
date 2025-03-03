@@ -1,0 +1,44 @@
+name: custom_chat_assistant
+version: 1.0.0
+description: Customized chat assistant using templates
+template: chat_assistant
+
+# Template parameters
+parameters:
+  model: gpt-4
+  personality: friendly
+  expertise: technical
+  language: english
+
+# Custom configurations
+settings:
+  temperature: 0.8
+  max_tokens: 2000
+  stream: true
+
+# Extended capabilities
+capabilities:
+  - code_explanation
+  - technical_writing
+  - documentation
+  - error_handling
+
+# Response formatting
+formatting:
+  style: markdown
+  code_blocks: true
+  syntax_highlighting: true
+
+# Custom prompts
+prompts:
+  greeting: "Hello! I'm your technical assistant. How can I help you today?"
+  error: "I encountered an issue. Could you please provide more details?"
+  clarification: "To better assist you, could you clarify..."
+
+# Integration settings
+integration:
+  platform: vscode
+  features:
+    - code_completion
+    - documentation_lookup
+    - error_detection

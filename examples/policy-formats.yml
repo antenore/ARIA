@@ -1,0 +1,88 @@
+# ARIA Policy Formats Example
+# This file demonstrates the two supported policy formats in ARIA
+
+# ===== CAPABILITY-BASED POLICY (TESTING) =====
+---
+name: capability_based_policy
+version: 1.0.0
+description: Example of a capability-based policy used primarily for testing
+
+# Capabilities define specific actions the AI can perform
+capabilities:
+  - name: code_generation
+    description: Generate code based on user requirements
+    allowed: true
+    conditions:
+      - Must include appropriate comments.
+      - Must follow project coding standards.
+      - Must not generate security vulnerabilities.
+
+  - name: data_analysis
+    description: Analyze data provided by the user
+    allowed: true
+    conditions:
+      - Must maintain data privacy.
+      - Must cite limitations of analysis.
+
+  - name: content_moderation
+    description: Filter inappropriate content
+    allowed: false
+    conditions: []
+
+# Global restrictions that apply to all capabilities
+restrictions:
+  - Must not retain user data beyond the session.
+  - Must inform users about limitations.
+  - Must provide attribution for external sources.
+
+# ===== MODEL-BASED POLICY (PRODUCTION) =====
+---
+name: model_based_policy
+version: 1.0.0
+description: Example of a model-based policy used in production environments
+
+# Specify the AI model type
+model: assistant
+
+# Default permissions for all paths
+defaults:
+  allow:
+    - review
+    - suggest
+    - analyze
+  require:
+    - human_review
+    - logging
+  deny:
+    - execute
+    - deploy
+
+# Path-specific rules
+paths:
+  "src/**/*.py":
+    allow:
+      - generate
+      - modify
+    require:
+      - unit_tests
+      - code_review
+  
+  "docs/**/*.md":
+    allow:
+      - generate
+      - format
+    deny:
+      - delete
+  
+  "config/**":
+    allow:
+      - review
+    deny:
+      - modify
+      - generate
+
+# Settings for the policy
+settings:
+  strict_mode: true
+  notification_level: warning
+  audit_frequency: daily
