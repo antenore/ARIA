@@ -112,6 +112,8 @@
 - [x] Policy to IDE rules converter
 - [x] Documentation for IDE rules integration
 - [x] IDE ignore file generation (.codeiumignore, .cursorignore)
+- [x] Enhance policy_to_ignore_patterns function to include comprehensive patterns for sensitive files
+- [x] Create tests for ignore file generation
 - [ ] 🟠 IDE-specific policy validation
 - [ ] 🔥 Improve policy enforcement
   * [ ] 🔥 Enhance ignore file generation to include all sensitive files
