@@ -11,6 +11,7 @@ ARIA can be integrated with several popular AI coding tools:
 - [GitHub Copilot Integration](github-copilot.md)
 - [Visual Studio Code Integration](vscode.md)
 - [Using IDE Rules for ARIA Policies](ide-rules.md)
+- [IDE Integration Strategy](ide-integration-strategy.md)
 
 ## Integration Approaches
 

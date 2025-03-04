@@ -170,7 +170,7 @@ This project is currently in **alpha stage** development (v0.1.2-dev). The core 
   - Enhancing policy enforcement mechanisms
   - Building comprehensive documentation
   - Creating a robust test suite
-- **Help Wanted**: See our [ToDo.md](ToDo.md) for prioritized tasks where contributions would be most valuable.
+- **Help Wanted**: See our [ToDo.md](ToDo.md), [ROADMAP.md](ROADMAP.md), and [DEVELOP_TODO.md](DEVELOP_TODO.md) for prioritized tasks where contributions would be most valuable.
 
 For more details on how to contribute, please see our [Contributing Guide](CONTRIBUTING.md).
 

@@ -11,10 +11,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Development version 0.1.2-dev
 - Official ARIA logo (assets/ARIA-Logo.svg)
 - Adaptive ARIA logo that changes color based on background (assets/ARIA-Logo-adaptive.svg)
+- Security scanning job using GitHub's CodeQL in CI workflow
+- Comprehensive documentation on GitHub Actions permissions (docs/github_actions_permissions.md)
+- Project ROADMAP.md with short-term, mid-term, and long-term goals
+- Detailed DEVELOP_TODO.md with specific tasks for the current development cycle
+- IDE integration strategy document (docs/guides/tool-integration/ide-integration-strategy.md)
+- VS Code integration planning document (docs/guides/tool-integration/vscode.md)
 
 ### Changed
 - Consolidated task lists by merging DEVELOP_TODO.md into ToDo.md
 - Updated ToDo.md with more detailed task breakdowns for v0.1.2-dev
+- Enhanced GitHub Actions workflow permissions configuration:
+  - Added specific permissions for pull requests, checks, actions, and issues
+  - Configured job-level permissions for documentation deployment
+  - Implemented security scanning with appropriate permissions
+  - Switched from deploy key to GITHUB_TOKEN for GitHub Pages deployment
 
 ### Planned
 - Full SDK plugins for various IDEs
