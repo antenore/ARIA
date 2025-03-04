@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Development version 0.1.2-dev
 - Official ARIA logo (assets/ARIA-Logo.svg)
 - Adaptive ARIA logo that changes color based on background (assets/ARIA-Logo-adaptive.svg)
+- Security scanning job using GitHub's CodeQL in CI workflow
+- Comprehensive documentation on GitHub Actions permissions (docs/github_actions_permissions.md)
+- Project ROADMAP.md with short-term, mid-term, and long-term goals
+- Detailed DEVELOP_TODO.md with specific tasks for the current development cycle
+- IDE integration strategy document (docs/guides/tool-integration/ide-integration-strategy.md)
+- VS Code integration planning document (docs/guides/tool-integration/vscode.md)
+- Enhanced ignore file generation with comprehensive patterns for sensitive files
+- Test suite for ignore file generation functionality
 
 ### Changed
 - Consolidated task lists by merging DEVELOP_TODO.md into ToDo.md
