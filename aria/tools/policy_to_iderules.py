@@ -107,6 +107,68 @@ def policy_to_ignore_patterns(policy: Dict[str, Any]) -> List[str]:
     ignore_patterns.append(".aria/")
     ignore_patterns.append("")
     
+    # Add standard patterns for sensitive files
+    ignore_patterns.append("# Protect sensitive configuration files")
+    ignore_patterns.append(".env")
+    ignore_patterns.append(".env.*")
+    ignore_patterns.append("*.pem")
+    ignore_patterns.append("*.key")
+    ignore_patterns.append("*.crt")
+    ignore_patterns.append("*.cer")
+    ignore_patterns.append("*.p12")
+    ignore_patterns.append("*.pfx")
+    ignore_patterns.append("*.jks")
+    ignore_patterns.append("*id_rsa*")
+    ignore_patterns.append("*id_dsa*")
+    ignore_patterns.append("*id_ecdsa*")
+    ignore_patterns.append("*id_ed25519*")
+    ignore_patterns.append("*.gpg")
+    ignore_patterns.append("*.pgp")
+    ignore_patterns.append("*.asc")
+    ignore_patterns.append("*.kbx")
+    ignore_patterns.append("")
+    
+    # Add patterns for secrets and credentials
+    ignore_patterns.append("# Protect secrets and credentials")
+    ignore_patterns.append("*secret*")
+    ignore_patterns.append("*password*")
+    ignore_patterns.append("*credential*")
+    ignore_patterns.append("*token*")
+    ignore_patterns.append("*apikey*")
+    ignore_patterns.append("*api-key*")
+    ignore_patterns.append("*api_key*")
+    ignore_patterns.append("*auth*")
+    ignore_patterns.append("*oauth*")
+    ignore_patterns.append("*jwt*")
+    ignore_patterns.append("")
+    
+    # Add patterns for CI/CD configuration
+    ignore_patterns.append("# Protect CI/CD configuration")
+    ignore_patterns.append(".github/secrets/")
+    ignore_patterns.append(".gitlab/secrets/")
+    ignore_patterns.append("*deploy-key*")
+    ignore_patterns.append("*deploy_key*")
+    ignore_patterns.append("")
+    
+    # Add patterns for infrastructure as code
+    ignore_patterns.append("# Protect infrastructure as code")
+    ignore_patterns.append("terraform.tfstate")
+    ignore_patterns.append("terraform.tfstate.backup")
+    ignore_patterns.append("*.tfvars")
+    ignore_patterns.append("*.tfplan")
+    ignore_patterns.append("ansible/vault*")
+    ignore_patterns.append("*kubeconfig*")
+    ignore_patterns.append("")
+    
+    # Add patterns for database files
+    ignore_patterns.append("# Protect database files")
+    ignore_patterns.append("*.db")
+    ignore_patterns.append("*.sqlite")
+    ignore_patterns.append("*.sqlite3")
+    ignore_patterns.append("*.rdb")
+    ignore_patterns.append("dump.rdb")
+    ignore_patterns.append("")
+    
     # Do NOT add IDE rule files to the ignore patterns
     # We want AI to be able to read them, just not modify them
     # This is handled by the rules themselves
